@@ -164,7 +164,7 @@
       saveStockEditBtn:$("saveStockEditBtn"),cancelStockEditBtn:$("cancelStockEditBtn")
     };
 
-    const discRate=x=>x>=5000?0.30:x>=3000?0.25:x>=2000?0.20:x>=1000?0.10:0;
+    const discRate=x=>x>=35000?0.35:x>=10001?0.25:x>=5001?0.20:x>=3001?0.10:0;
     const totals=()=>{const sub=s.cart.reduce((a,b)=>a+b.price*b.qty,0),r=discRate(sub),d=sub*r;return{sub,r,d,t:sub-d}};
     const hash=async txt=>[...(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(txt))))].map(v=>v.toString(16).padStart(2,"0")).join("");
 
@@ -385,7 +385,7 @@
       doc.setFillColor(230,239,255);doc.rect(14,y-5,182,8,"F");doc.setFontSize(10);doc.text("Book",16,y);doc.text("Price",132,y);doc.text("Qty",154,y);doc.text("Amount",176,y,{align:"right"});y+=6;
       tx.lines.forEach(i=>{if(y>276){doc.addPage();y=20;}doc.text(i.title.length>70?`${i.title.slice(0,67)}...`:i.title,16,y);doc.text(fmt(i.price),132,y);doc.text(String(i.qty),154,y);doc.text(fmt(i.amount),176,y,{align:"right"});y+=6;});
       y+=4;doc.line(14,y,196,y);y+=8;doc.text(`Subtotal: ${fmt(t.sub)}`,130,y,{align:"right"});y+=6;doc.text(`Discount (${Math.round(t.r*100)}%): ${fmt(t.d)}`,130,y,{align:"right"});y+=6;doc.setFontSize(13);doc.text(`Grand Total: ${fmt(t.t)}`,130,y,{align:"right"});
-      y+=12;doc.setFontSize(9);doc.setTextColor(95,110,132);doc.text("Tiers: <1000=0%, >=1000=10%, >=2000=20%, >=3000=25%, >=5000=30%",14,y);
+      y+=12;doc.setFontSize(9);doc.setTextColor(95,110,132);doc.text("Tiers: <=3000=0%, 3001-5000=10%, 5001-10000=20%, 10001-35000=25%, >=35000=35%",14,y);
       doc.save(`${tx.no}.pdf`);
     }
 

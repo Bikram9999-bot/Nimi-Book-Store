@@ -1,53 +1,43 @@
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
-const { initDb } = require("./db");
-const authRoutes = require("./routes/authRoutes");
-const itemRoutes = require("./routes/itemRoutes");
-
-dotenv.config();
+const { connectDb } = require("./db");
+const bookRoutes = require("./routes/bookRoutes");
 
 const app = express();
-const PORT = Number(process.env.PORT || 4000);
+const PORT = Number(process.env.PORT || 5000);
 
-const corsOrigin = process.env.FRONTEND_ORIGIN
-  ? process.env.FRONTEND_ORIGIN.split(",").map((o) => o.trim())
-  : "*";
-
-app.use(
-  cors({
-    origin: corsOrigin,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-  })
-);
-
+app.use(cors());
 app.use(express.json());
 
-app.get("/api/health", (req, res) => {
-  res.status(200).json({ message: "API is running" });
+console.log("MONGO_URI:", process.env.MONGO_URI);
+
+app.get("/", (req, res) => {
+  res.status(200).send("POS Backend Running");
 });
 
-app.use("/api/auth", authRoutes);
-app.use("/api/items", itemRoutes);
-
-app.use((req, res) => {
-  res.status(404).json({ error: "Route not found" });
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    message: "POS API running"
+  });
 });
+
+app.use("/api/books", bookRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);
-  if (res.headersSent) return next(err);
-  res.status(err.status || 500).json({ error: err.message || "Internal server error" });
+  res.status(500).json({ error: "Server error" });
 });
 
-initDb()
+connectDb()
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`Server started on http://localhost:${PORT}`);
+      console.log(`Server running on http://localhost:${PORT}`);
     });
   })
   .catch((err) => {
-    console.error("Failed to start server:", err);
+    console.error("Failed to connect to MongoDB:", err.message);
     process.exit(1);
   });
