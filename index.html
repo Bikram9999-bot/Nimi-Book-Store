@@ -386,7 +386,7 @@
       if(!status){el.editStockError.textContent="Stock status is required.";return;}
 
       try{
-        await apiUpdateBook(id,{ stock: qty, price });
+        await apiUpdateBook(id,{ stock: qty, price, category: status });
         row.baseRemaining=qty;
         row.prevStock=qty;
         row.baseSales=0;
