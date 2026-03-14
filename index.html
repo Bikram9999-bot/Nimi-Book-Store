@@ -217,7 +217,8 @@
       s.books = books.map(b=>({
         id:String(b._id),
         title:String(b.title),
-        price:Number(b.price)||0
+        price:Number(b.price)||0,
+        serialNo:Number(b.serialNo)||0
       }));
       s.stockRows = books.map(b=>({
         id:String(b._id),
@@ -226,7 +227,8 @@
         baseSales:0,
         baseRemaining:Number(b.stock)||0,
         price:Number(b.price)||0,
-        status:String(b.status||"")
+        status:String(b.status||""),
+        serialNo:Number(b.serialNo)||0
       }));
       s.stockSales = {};
       localStorage.setItem(KEYS.SB,JSON.stringify(s.stockRows));
@@ -441,7 +443,7 @@
       const q=el.stockSearch.value.trim().toLowerCase();
       const rows=s.stockRows
         .filter(r=>!q||String(r.id).includes(q)||r.title.toLowerCase().includes(q))
-        .sort((a,b)=>a.title.localeCompare(b.title));
+        .sort((a,b)=>(a.serialNo||0)-(b.serialNo||0));
       if(!rows.length){el.stockBody.innerHTML='<tr><td colspan="8" class="muted">No matching stock rows.</td></tr>';el.stockSummary.textContent='0 rows';return;}
       el.stockBody.innerHTML="";
       rows.forEach((r,idx)=>{
@@ -450,7 +452,8 @@
         const rem=r.baseRemaining-posSales;
         const status=(r.status && r.status.trim())?r.status:computeStatus(rem);
         const tr=document.createElement("tr");
-        tr.innerHTML=`<td>${idx+1}</td><td>${r.title}</td><td>${r.prevStock}</td><td>${sales}</td><td>${rem}</td><td>${fmt(r.price||0)}</td><td>${status}</td><td><button class="soft" data-edit-stock="${r.id}">Edit</button></td>`;
+        const sl = r.serialNo ? r.serialNo : idx+1;
+        tr.innerHTML=`<td>${sl}</td><td>${r.title}</td><td>${r.prevStock}</td><td>${sales}</td><td>${rem}</td><td>${fmt(r.price||0)}</td><td>${status}</td><td><button class="soft" data-edit-stock="${r.id}">Edit</button></td>`;
         el.stockBody.appendChild(tr);
       });
       el.stockSummary.textContent=`${rows.length} rows`;

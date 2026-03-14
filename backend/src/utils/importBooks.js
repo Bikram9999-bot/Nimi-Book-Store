@@ -24,6 +24,7 @@ function parseCsv(content) {
   const idx = (name) => headers.indexOf(name);
 
   const titleIdx = idx("title");
+  const serialIdx = idx("sr.no.");
   const priceIdx = headers.includes("price") ? idx("price") : idx("unit price");
   const stockIdx = headers.includes("stock") ? idx("stock") : idx("remaining stock");
   const categoryIdx = idx("category");
@@ -32,11 +33,13 @@ function parseCsv(content) {
   return lines.slice(1).map((line) => {
     const parts = line.split(",").map((v) => v.replace(/"/g, "").trim());
     const title = parts[titleIdx] || "";
+    const serialNo = Number(serialIdx >= 0 ? parts[serialIdx] : "");
     const price = Number(parts[priceIdx]);
     const stock = Number(parts[stockIdx]);
     const category = categoryIdx >= 0 ? parts[categoryIdx] : "";
     const status = statusIdx >= 0 ? parts[statusIdx] : "";
     return {
+      serialNo: Number.isFinite(serialNo) ? serialNo : 0,
       title: String(title).trim(),
       price: Number.isFinite(price) ? price : 0,
       stock: Number.isFinite(stock) ? stock : 0,
@@ -63,17 +66,24 @@ async function run() {
     process.exit(0);
   }
 
-  const existing = await Book.find({}, "title").lean();
-  const existingSet = new Set(existing.map((b) => b.title.toLowerCase()));
+  const ops = rows.map((r) => ({
+    updateOne: {
+      filter: { title: r.title },
+      update: {
+        $set: {
+          serialNo: r.serialNo,
+          price: r.price,
+          stock: r.stock,
+          category: r.category,
+          status: r.status
+        }
+      },
+      upsert: true
+    }
+  }));
 
-  const toInsert = rows.filter((r) => !existingSet.has(r.title.toLowerCase()));
-  if (!toInsert.length) {
-    console.log("No new books to insert (duplicates skipped).");
-    process.exit(0);
-  }
-
-  await Book.insertMany(toInsert);
-  console.log(`Imported ${toInsert.length} books.`);
+  const result = await Book.bulkWrite(ops);
+  console.log(`Sync complete. Upserts: ${result.upsertedCount}, Modified: ${result.modifiedCount}`);
   process.exit(0);
 }
 
