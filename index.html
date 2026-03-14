@@ -69,6 +69,7 @@
         <div class="head-right">
           <button id="stockBtn" class="soft">Stock Data</button>
           <button id="logoutBtn" class="soft">Logout</button>
+          <span id="syncStatus" class="muted">Sync: checking...</span>
           <span id="bookCount" class="muted">0 books</span>
         </div>
       </div>
@@ -145,6 +146,8 @@
     const EXPECTED={count:117,min:85,max:495,checksum:"ceb54b3b650b4568b8d73b785000c20c938171becf6914478afdf967ee273670"};
     const LOGIN_PASSWORD="NIMI";
     const LOGIN_KEY="bookstore_pos_logged_in";
+    // Backend API (Vercel)
+    const API_BASE="https://nimi-book-store.vercel.app";
     const OWNER_EMAIL="ss190775@gmail.com";
     const KEYS={TX:"bookstore_pos_tx_v4",C:"bookstore_pos_customer_v4",SB:"bookstore_pos_stock_base_v1",SS:"bookstore_pos_stock_sales_v3"};
     const EMAILJS_CONFIG={enabled:false,publicKey:"",serviceId:"",templateId:"",vars:{to:"to_email",cc:"cc_email",subject:"subject",body:"text_body",customer:"customer_name",receipt:"receipt_no"}};
@@ -152,7 +155,7 @@
     const s={books:[],cart:[],sel:null,tx:[],selectedTxNo:"",c:{name:"",phone:"",email:"",address:"",pincode:""},stockRows:[],stockSales:{},editingStockId:null,appInitialized:false};
     const $=id=>document.getElementById(id),fmt=v=>`Rs ${Number(v).toFixed(2)}`;
     const el={
-      loginScreen:$("loginScreen"),loginPassword:$("loginPassword"),loginBtn:$("loginBtn"),loginError:$("loginError"),appRoot:$("appRoot"),logoutBtn:$("logoutBtn"),
+      loginScreen:$("loginScreen"),loginPassword:$("loginPassword"),loginBtn:$("loginBtn"),loginError:$("loginError"),appRoot:$("appRoot"),logoutBtn:$("logoutBtn"),syncStatus:$("syncStatus"),
       status:$("status"),bookCount:$("bookCount"),q:$("q"),dd:$("dd"),add:$("add"),sel:$("sel"),
       cart:$("cart"),sub:$("sub"),tier:$("tier"),disc:$("disc"),tot:$("tot"),clear:$("clear"),pdf:$("pdf"),
       history:$("history"),txDetail:$("txDetail"),cn:$("cn"),cp:$("cp"),ce:$("ce"),ca:$("ca"),cz:$("cz"),cerr:$("cerr"),
@@ -196,6 +199,77 @@
       }).filter(Boolean);
     }
 
+    function setSyncStatus(text, ok){
+      if(!el.syncStatus) return;
+      el.syncStatus.textContent = `Sync: ${text}`;
+      el.syncStatus.style.color = ok ? "#1f7a41" : "#b32727";
+    }
+
+    async function apiGetBooks(){
+      const res = await fetch(`${API_BASE}/api/books`);
+      if(!res.ok) throw new Error("Failed to load books from backend");
+      const data = await res.json();
+      return data.books || [];
+    }
+
+    function applyBooksFromApi(books){
+      // Map Mongo books to local state
+      s.books = books.map(b=>({
+        id:String(b._id),
+        title:String(b.title),
+        price:Number(b.price)||0
+      }));
+      s.stockRows = books.map(b=>({
+        id:String(b._id),
+        title:String(b.title),
+        prevStock:Number(b.stock)||0,
+        baseSales:0,
+        baseRemaining:Number(b.stock)||0,
+        price:Number(b.price)||0,
+        status:""
+      }));
+      s.stockSales = {};
+      localStorage.setItem(KEYS.SB,JSON.stringify(s.stockRows));
+      localStorage.setItem(KEYS.SS,JSON.stringify(s.stockSales));
+      el.bookCount.textContent = `${s.books.length} books`;
+      el.status.className = "status ok";
+      el.status.textContent = "Catalog loaded from backend.";
+    }
+
+    async function refreshBooksFromApi(){
+      try{
+        const books = await apiGetBooks();
+        applyBooksFromApi(books);
+        drawStock();
+        setSyncStatus("online", true);
+      }catch(err){
+        setSyncStatus("offline", false);
+        throw err;
+      }
+    }
+
+    async function apiUpdateStock(id, quantity){
+      const res = await fetch(`${API_BASE}/api/books/${id}/stock`,{
+        method:"PUT",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ quantity })
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || "Stock update failed");
+      return data.book;
+    }
+
+    async function apiUpdateBook(id, payload){
+      const res = await fetch(`${API_BASE}/api/books/${id}`,{
+        method:"PUT",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || "Book update failed");
+      return data.book;
+    }
+
     async function loadBooksCsv(file){
       const csv=await file.text(),books=parseBooks(csv),prices=books.map(x=>x.price),sig=books.map(x=>`${x.title}|${x.price};`).join("");
       const ok={count:books.length===EXPECTED.count,min:Math.min(...prices)===EXPECTED.min,max:Math.max(...prices)===EXPECTED.max,checksum:(await hash(sig))===EXPECTED.checksum};
@@ -213,8 +287,30 @@
     }
 
     async function tryLoadDefault(){
-      try{const rb=await fetch("Books CSV-117.csv");if(rb.ok){await loadBooksCsv(new File([await rb.text()],"Books CSV-117.csv",{type:"text/csv"}));}}catch(_){}
-      try{const rs=await fetch("Stock for COde.csv");if(rs.ok){await loadStockCsv(new File([await rs.text()],"Stock for COde.csv",{type:"text/csv"}));}}catch(_){}
+      try{
+        await refreshBooksFromApi();
+        return;
+      }catch(_){}
+      // Fallback to bundled seed if backend is unreachable
+      if(window.POS_SEED && Array.isArray(window.POS_SEED.books) && window.POS_SEED.books.length){
+        s.books = window.POS_SEED.books.map(b=>({id:String(b.id),title:String(b.title),price:Number(b.price)}));
+        el.bookCount.textContent = `${s.books.length} books`;
+        el.status.className = "status ok";
+        el.status.textContent = "Catalog loaded from local seed.";
+      }
+      if(window.POS_SEED && Array.isArray(window.POS_SEED.stock) && window.POS_SEED.stock.length){
+        s.stockRows = window.POS_SEED.stock.map(r=>({
+          id:String(r.id),
+          title:String(r.title),
+          prevStock:Number(r.prevStock),
+          baseSales:Number(r.baseSales),
+          baseRemaining:Number(r.baseRemaining),
+          price:Number(r.price||0),
+          status:String(r.status||"")
+        }));
+        localStorage.setItem(KEYS.SB,JSON.stringify(s.stockRows));
+      }
+      drawStock();
     }
 
     function drawSearch(){
@@ -226,7 +322,13 @@
       el.dd.style.display="block";
     }
 
-    function addToCart(){if(!s.sel)return;const e=s.cart.find(i=>i.id===s.sel.id);if(e)e.qty+=1;else s.cart.push({...s.sel,qty:1});s.sel=null;el.q.value="";el.add.disabled=true;el.sel.textContent="";drawCart();}
+    function addToCart(){
+      if(!s.sel)return;
+      const e=s.cart.find(i=>i.id===s.sel.id);
+      if(e)e.qty+=1;
+      else s.cart.push({...s.sel,qty:1});
+      s.sel=null;el.q.value="";el.add.disabled=true;el.sel.textContent="";drawCart();
+    }
     function drawCart(){
       if(!s.cart.length)el.cart.innerHTML='<tr><td colspan="5" class="muted">Cart is empty.</td></tr>';
       else{el.cart.innerHTML="";s.cart.forEach(i=>{const tr=document.createElement("tr");tr.innerHTML=`<td>${i.title}</td><td>${fmt(i.price)}</td><td><input class="qty" type="number" min="1" value="${i.qty}" data-q="${i.id}"></td><td>${fmt(i.price*i.qty)}</td><td><button class="danger" data-r="${i.id}">X</button></td>`;el.cart.appendChild(tr)})}
@@ -271,7 +373,7 @@
       el.stockEditModal.style.display="none";
     }
 
-    function saveStockEdit(){
+    async function saveStockEdit(){
       const id=s.editingStockId;
       if(!id)return;
       const row=s.stockRows.find(r=>r.id===id);
@@ -283,14 +385,19 @@
       if(!Number.isFinite(price) || price<0){el.editStockError.textContent="Price must be 0 or more.";return;}
       if(!status){el.editStockError.textContent="Stock status is required.";return;}
 
-      const posSales=s.stockSales[id]||0;
-      row.baseRemaining=qty+posSales;
-      row.baseSales=Math.max(0, row.prevStock - row.baseRemaining);
-      row.price=price;
-      row.status=status;
-      localStorage.setItem(KEYS.SB,JSON.stringify(s.stockRows));
-      drawStock();
-      closeStockEdit();
+      try{
+        await apiUpdateBook(id,{ stock: qty, price });
+        row.baseRemaining=qty;
+        row.prevStock=qty;
+        row.baseSales=0;
+        row.price=price;
+        row.status=status;
+        localStorage.setItem(KEYS.SB,JSON.stringify(s.stockRows));
+        drawStock();
+        closeStockEdit();
+      }catch(err){
+        el.editStockError.textContent=err.message;
+      }
     }
 
     function addTx(t){
@@ -394,13 +501,27 @@
       persistCustomer();
       const ce=vCust(s.c);
       if(ce){el.cerr.textContent=ce;alert(`Customer details required: ${ce}`);return;}
+      try{
+        await refreshBooksFromApi();
+      }catch(_){
+        alert("Backend not reachable. Please try again.");
+        return;
+      }
       const stockIssues=validateStock(s.cart);
       if(stockIssues.length){
         alert(`Stock not sufficient:\n${stockIssues.join("\n")}`);
         return;
       }
       const t=totals(),tx=addTx(t);
-      applySaleToStock(tx.lines);
+      try{
+        for(const line of tx.lines){
+          await apiUpdateStock(line.id, line.qty);
+        }
+        await refreshBooksFromApi();
+      }catch(err){
+        alert(`Stock update failed: ${err.message}`);
+        return;
+      }
       pdf(tx,t);
       try{await sendReceiptEmail(tx,t);}catch(_){alert("Email send failed.");}
       s.cart=[];drawCart();
@@ -445,37 +566,28 @@
         if(c&&typeof c==="object")s.c={...s.c,...c};
         if(Array.isArray(sb))s.stockRows=sb.map(r=>({
           ...r,
+          id:String(r.id),
           price:Number(r.price||0),
           status:String(r.status||"")
         }));
         if(ss&&typeof ss==="object")s.stockSales=ss;
       }catch(_){}
 
-      if(window.POS_SEED && Array.isArray(window.POS_SEED.books) && window.POS_SEED.books.length){
-        s.books = window.POS_SEED.books.map(b=>({id:Number(b.id),title:String(b.title),price:Number(b.price)}));
-        el.bookCount.textContent = `${s.books.length} books`;
-        el.status.className = "status ok";
-        el.status.textContent = "Catalog auto-loaded.";
-      }
-      if(window.POS_SEED && Array.isArray(window.POS_SEED.stock) && window.POS_SEED.stock.length){
-        s.stockRows = window.POS_SEED.stock.map(r=>({
-          id:Number(r.id),
-          title:String(r.title),
-          prevStock:Number(r.prevStock),
-          baseSales:Number(r.baseSales),
-          baseRemaining:Number(r.baseRemaining),
-          price:Number(r.price||0),
-          status:String(r.status||"")
-        }));
-        localStorage.setItem(KEYS.SB,JSON.stringify(s.stockRows));
-      }
-
       el.cn.value=s.c.name;el.cp.value=s.c.phone;el.ce.value=s.c.email;el.ca.value=s.c.address;el.cz.value=s.c.pincode;
 
       drawCart();drawHistory();drawStock();
       el.q.oninput=drawSearch;el.add.onclick=addToCart;document.addEventListener("click",e=>{if(!el.dd.contains(e.target)&&e.target!==el.q)el.dd.style.display="none"});
-      el.cart.oninput=e=>{const id=Number(e.target.getAttribute("data-q"));if(id){const it=s.cart.find(x=>x.id===id);if(it){it.qty=Math.max(1,Number(e.target.value)||1);drawCart();}}};
-      el.cart.onclick=e=>{const id=Number(e.target.getAttribute("data-r"));if(id){s.cart=s.cart.filter(x=>x.id!==id);drawCart();}};
+      el.cart.oninput=e=>{
+        const id=e.target.getAttribute("data-q");
+        if(id){
+          const it=s.cart.find(x=>x.id===id);
+          if(it){it.qty=Math.max(1,Number(e.target.value)||1);drawCart();}
+        }
+      };
+      el.cart.onclick=e=>{
+        const id=e.target.getAttribute("data-r");
+        if(id){s.cart=s.cart.filter(x=>x.id!==id);drawCart();}
+      };
       el.clear.onclick=()=>{s.cart=[];drawCart();};el.pdf.onclick=checkout;
 
       [el.cn,el.cp,el.ce,el.ca,el.cz].forEach(i=>i.addEventListener("input",persistCustomer));
@@ -485,7 +597,7 @@
       el.closeStockBtn.onclick=()=>{el.stockModal.style.display="none";};
       el.stockModal.onclick=e=>{if(e.target===el.stockModal)el.stockModal.style.display="none";};
       el.stockSearch.oninput=drawStock;
-      el.stockBody.onclick=e=>{const id=Number(e.target.getAttribute("data-edit-stock"));if(id)openStockEdit(id);};
+      el.stockBody.onclick=e=>{const id=e.target.getAttribute("data-edit-stock");if(id)openStockEdit(id);};
 
       el.closeStockEditBtn.onclick=closeStockEdit;
       el.cancelStockEditBtn.onclick=closeStockEdit;
@@ -501,6 +613,7 @@
       el.loginPassword.addEventListener("input",()=>{el.loginError.textContent="";});
       el.logoutBtn.onclick=handleLogout;
 
+      setSyncStatus("checking...", false);
       if(sessionStorage.getItem(LOGIN_KEY)==="1"){
         showApp();
         initApp();
