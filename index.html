@@ -116,7 +116,7 @@
       <div class="modal-body">
         <label for="stockSearch">Search stock</label>
         <div class="row"><input id="stockSearch" placeholder="Type title or id"><span class="muted" id="stockSummary"></span></div>
-        <table style="margin-top:8px"><thead><tr><th style="width:6%">ID</th><th style="width:38%">Title</th><th style="width:10%">Prev Stock</th><th style="width:10%">Sales</th><th style="width:10%">Remaining</th><th style="width:10%">Price</th><th style="width:10%">Status</th><th style="width:6%">Edit</th></tr></thead><tbody id="stockBody"><tr><td colspan="8" class="muted">Loading stock...</td></tr></tbody></table>
+        <table style="margin-top:8px"><thead><tr><th style="width:6%">SL No</th><th style="width:38%">Title</th><th style="width:10%">Prev Stock</th><th style="width:10%">Sales</th><th style="width:10%">Remaining</th><th style="width:10%">Price</th><th style="width:10%">Status</th><th style="width:6%">Edit</th></tr></thead><tbody id="stockBody"><tr><td colspan="8" class="muted">Loading stock...</td></tr></tbody></table>
       </div>
     </div>
   </div>
@@ -439,16 +439,18 @@
 
     function drawStock(){
       const q=el.stockSearch.value.trim().toLowerCase();
-      const rows=s.stockRows.filter(r=>!q||String(r.id).includes(q)||r.title.toLowerCase().includes(q));
+      const rows=s.stockRows
+        .filter(r=>!q||String(r.id).includes(q)||r.title.toLowerCase().includes(q))
+        .sort((a,b)=>a.title.localeCompare(b.title));
       if(!rows.length){el.stockBody.innerHTML='<tr><td colspan="8" class="muted">No matching stock rows.</td></tr>';el.stockSummary.textContent='0 rows';return;}
       el.stockBody.innerHTML="";
-      rows.forEach(r=>{
+      rows.forEach((r,idx)=>{
         const posSales=s.stockSales[r.id]||0;
         const sales=r.baseSales+posSales;
         const rem=r.baseRemaining-posSales;
         const status=(r.status && r.status.trim())?r.status:computeStatus(rem);
         const tr=document.createElement("tr");
-        tr.innerHTML=`<td>${r.id}</td><td>${r.title}</td><td>${r.prevStock}</td><td>${sales}</td><td>${rem}</td><td>${fmt(r.price||0)}</td><td>${status}</td><td><button class="soft" data-edit-stock="${r.id}">Edit</button></td>`;
+        tr.innerHTML=`<td>${idx+1}</td><td>${r.title}</td><td>${r.prevStock}</td><td>${sales}</td><td>${rem}</td><td>${fmt(r.price||0)}</td><td>${status}</td><td><button class="soft" data-edit-stock="${r.id}">Edit</button></td>`;
         el.stockBody.appendChild(tr);
       });
       el.stockSummary.textContent=`${rows.length} rows`;

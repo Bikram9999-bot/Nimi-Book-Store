@@ -7,7 +7,7 @@ function isValidId(id) {
 
 async function getBooks(req, res, next) {
   try {
-    const books = await Book.find().sort({ createdAt: -1 });
+    const books = await Book.find().sort({ title: 1 });
     return res.status(200).json({ books });
   } catch (err) {
     return next(err);
