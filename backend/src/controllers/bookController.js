@@ -28,7 +28,7 @@ async function getBookById(req, res, next) {
 
 async function createBook(req, res, next) {
   try {
-    const { title, price, stock, category } = req.body;
+    const { title, price, stock, category, status } = req.body;
     if (!title || price === undefined || stock === undefined) {
       return res.status(400).json({ error: "title, price and stock are required" });
     }
@@ -45,7 +45,8 @@ async function createBook(req, res, next) {
       title: String(title).trim(),
       price: priceNum,
       stock: stockNum,
-      category: String(category || "").trim()
+      category: String(category || "").trim(),
+      status: String(status || "").trim()
     });
     return res.status(201).json({ book });
   } catch (err) {
@@ -63,6 +64,7 @@ async function updateBook(req, res, next) {
     if (req.body.price !== undefined) update.price = Number(req.body.price);
     if (req.body.stock !== undefined) update.stock = Number(req.body.stock);
     if (req.body.category !== undefined) update.category = String(req.body.category).trim();
+    if (req.body.status !== undefined) update.status = String(req.body.status).trim();
 
     if (update.price !== undefined && (!Number.isFinite(update.price) || update.price < 0)) {
       return res.status(400).json({ error: "price must be a non-negative number" });

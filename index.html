@@ -226,7 +226,7 @@
         baseSales:0,
         baseRemaining:Number(b.stock)||0,
         price:Number(b.price)||0,
-        status:""
+        status:String(b.status||"")
       }));
       s.stockSales = {};
       localStorage.setItem(KEYS.SB,JSON.stringify(s.stockRows));
@@ -386,7 +386,7 @@
       if(!status){el.editStockError.textContent="Stock status is required.";return;}
 
       try{
-        await apiUpdateBook(id,{ stock: qty, price, category: status });
+        await apiUpdateBook(id,{ stock: qty, price, status });
         row.baseRemaining=qty;
         row.prevStock=qty;
         row.baseSales=0;

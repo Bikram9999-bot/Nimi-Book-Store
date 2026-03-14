@@ -27,6 +27,7 @@ function parseCsv(content) {
   const priceIdx = headers.includes("price") ? idx("price") : idx("unit price");
   const stockIdx = headers.includes("stock") ? idx("stock") : idx("remaining stock");
   const categoryIdx = idx("category");
+  const statusIdx = idx("status");
 
   return lines.slice(1).map((line) => {
     const parts = line.split(",").map((v) => v.replace(/"/g, "").trim());
@@ -34,11 +35,13 @@ function parseCsv(content) {
     const price = Number(parts[priceIdx]);
     const stock = Number(parts[stockIdx]);
     const category = categoryIdx >= 0 ? parts[categoryIdx] : "";
+    const status = statusIdx >= 0 ? parts[statusIdx] : "";
     return {
       title: String(title).trim(),
       price: Number.isFinite(price) ? price : 0,
       stock: Number.isFinite(stock) ? stock : 0,
-      category: String(category || "").trim()
+      category: String(category || "").trim(),
+      status: String(status || "").trim()
     };
   }).filter((row) => row.title);
 }
