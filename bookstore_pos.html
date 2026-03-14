@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bookstore POS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    :root{--b:#0f5bcf;--bg:#edf4ff;--p:#fff;--l:#d5e2f7;--t:#10213f;--m:#5f7295;--ok:#1f7a41;--bad:#b32727}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,sans-serif;background:radial-gradient(circle at 90% 10%,#b8d5ff55,transparent 35%),var(--bg);color:var(--t)}
+    .wrap{max-width:1280px;margin:0 auto;padding:18px;display:grid;gap:18px;grid-template-columns:1.15fr .85fr}
+    .panel{background:var(--p);border:1px solid var(--l);border-radius:14px;box-shadow:0 16px 34px #07215a1a}
+    .h{padding:14px 16px;border-bottom:1px solid var(--l);background:linear-gradient(120deg,#f7faff,#e7f1ff);display:flex;justify-content:space-between;align-items:center}
+    .h h2{margin:0;font-size:18px}.b{padding:14px 16px}
+    .head-right{display:flex;gap:8px;align-items:center}
+    .status{padding:9px 11px;border-radius:9px;font-size:13px;font-weight:700;margin-bottom:10px}.ok{background:#effaf3;border:1px solid #b7e0c5;color:var(--ok)}.bad{background:#fff1f1;border:1px solid #efbdbd;color:var(--bad)}
+    label{display:block;font-size:12px;color:var(--m);font-weight:700;margin:8px 0 5px}
+    input,textarea{width:100%;padding:10px 11px;border:1px solid #c6d8f0;border-radius:9px;font:inherit}
+    button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700;cursor:pointer}
+    .pri{background:var(--b);color:#fff}.soft{background:#dbe8ff;color:#0f479e}.danger{background:#ffe4e4;color:#971c1c}
+    .r{display:grid;grid-template-columns:1fr auto;gap:10px;position:relative}
+    .dd{position:absolute;left:0;right:0;top:100%;margin-top:6px;background:#fff;border:1px solid var(--l);border-radius:9px;display:none;max-height:270px;overflow:auto;z-index:9}
+    .dd div{padding:9px 11px;border-bottom:1px solid #edf2fb;display:flex;justify-content:space-between;cursor:pointer}.dd div:hover{background:#f4f8ff}
+    table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px 8px;border-bottom:1px solid #edf2fb;text-align:left}th{font-size:12px;color:var(--m);background:#f7faff}
+    .sum{margin-top:10px;border:1px solid var(--l);border-radius:10px;padding:10px;background:#f8fbff}.sum div{display:flex;justify-content:space-between;margin:6px 0}.sum .t{font-size:18px;font-weight:800;border-top:1px solid #d4e1f3;padding-top:8px;margin-top:8px}
+    .act{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .hist{max-height:260px;overflow:auto;display:grid;gap:8px}.item{border:1px solid var(--l);border-radius:9px;padding:9px 10px;background:#fbfdff}
+    .muted{font-size:12px;color:var(--m)}.qty{width:70px;text-align:center}
+    .side-block{border:1px solid var(--l);border-radius:10px;padding:10px;background:#f8fbff;margin-bottom:10px}
+    .side-title{margin:0 0 6px;font-size:14px;font-weight:800}
+    .chip{display:inline-block;background:#e8f1ff;color:#134b9a;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:700}
+    .tx-detail{max-height:230px;overflow:auto}
+    .modal{position:fixed;inset:0;background:#041a3a66;display:none;align-items:center;justify-content:center;padding:14px;z-index:50}
+    .modal-card{width:min(1100px,100%);max-height:86vh;overflow:auto;background:#fff;border:1px solid var(--l);border-radius:12px}
+    .modal-card.sm{width:min(520px,100%)}
+    .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .login-card{width:min(420px,100%);background:#fff;border:1px solid var(--l);border-radius:14px;box-shadow:0 18px 40px rgba(7,29,74,0.12);padding:18px}
+    .login-card h1{margin:0 0 6px;font-size:20px}
+    .login-card .muted{margin-bottom:10px}
+    .modal-head{padding:12px 14px;background:#f3f8ff;border-bottom:1px solid var(--l);display:flex;justify-content:space-between;align-items:center}
+    .modal-body{padding:12px 14px}
+    .row{display:grid;grid-template-columns:1fr auto;gap:8px}
+    @media (max-width:1024px){.wrap{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <section id="loginScreen" class="login-wrap" style="display:none;">
+    <div class="login-card">
+      <h1>Bookstore POS Login</h1>
+      <div class="muted">Enter the password to access the dashboard.</div>
+      <label for="loginPassword">Password</label>
+      <input id="loginPassword" type="password" placeholder="Password">
+      <div id="loginError" class="muted" style="color:#b32727"></div>
+      <div class="act">
+        <button id="loginBtn" class="pri">Login</button>
+      </div>
+    </div>
+  </section>
+
+  <main id="appRoot" class="wrap" style="display:none;">
+    <section class="panel">
+      <div class="h">
+        <h2>Bookstore POS</h2>
+        <div class="head-right">
+          <button id="stockBtn" class="soft">Stock Data</button>
+          <button id="logoutBtn" class="soft">Logout</button>
+          <span id="bookCount" class="muted">0 books</span>
+        </div>
+      </div>
+      <div class="b">
+        <div id="status" class="status bad">Loading catalog...</div>
+
+        <label for="q">Search books (2+ chars)</label>
+        <div class="r"><input id="q" placeholder="Type title keyword"><button id="add" class="pri" disabled>Add</button><div id="dd" class="dd"></div></div>
+        <div id="sel" class="muted" style="margin-top:7px"></div>
+
+        <table style="margin-top:10px"><thead><tr><th style="width:45%">Book</th><th>Price</th><th>Qty</th><th>Amount</th><th>X</th></tr></thead><tbody id="cart"><tr><td colspan="5" class="muted">Cart is empty.</td></tr></tbody></table>
+        <div class="sum"><div><span>Subtotal</span><b id="sub">Rs 0.00</b></div><div><span>Discount Tier</span><b id="tier">0%</b></div><div><span>Discount</span><b id="disc">Rs 0.00</b></div><div class="t"><span>Total</span><b id="tot">Rs 0.00</b></div></div>
+        <div class="act"><button id="clear" class="soft">Clear Cart</button><button id="pdf" class="pri">Submit Purchase</button></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="h"><h2>Customer and Transactions</h2><span class="muted">latest 50 receipts</span></div>
+      <div class="b">
+        <div class="side-block">
+          <p class="side-title">Customer Details</p>
+          <label>Name</label><input id="cn" placeholder="Full name">
+          <label>Phone</label><input id="cp" placeholder="10 digits">
+          <label>Email</label><input id="ce" placeholder="customer@email.com">
+          <label>Address</label><textarea id="ca" rows="2" placeholder="Street, area, city"></textarea>
+          <label>Pincode</label><input id="cz" placeholder="6 digits">
+          <div id="cerr" class="muted" style="color:#b32727"></div>
+        </div>
+
+        <p class="side-title" style="margin-top:0">Transactions</p>
+        <div id="history" class="hist"><div class="muted">No transactions yet.</div></div>
+
+        <div class="side-block tx-detail">
+          <p class="side-title">Transaction Review</p>
+          <div id="txDetail" class="muted">Select a transaction to review items and amounts.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="stockModal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head"><b>Stock Data</b><button id="closeStockBtn" class="soft">Close</button></div>
+      <div class="modal-body">
+        <label for="stockSearch">Search stock</label>
+        <div class="row"><input id="stockSearch" placeholder="Type title or id"><span class="muted" id="stockSummary"></span></div>
+        <table style="margin-top:8px"><thead><tr><th style="width:6%">ID</th><th style="width:38%">Title</th><th style="width:10%">Prev Stock</th><th style="width:10%">Sales</th><th style="width:10%">Remaining</th><th style="width:10%">Price</th><th style="width:10%">Status</th><th style="width:6%">Edit</th></tr></thead><tbody id="stockBody"><tr><td colspan="8" class="muted">Loading stock...</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div id="stockEditModal" class="modal">
+    <div class="modal-card sm">
+      <div class="modal-head"><b>Edit Stock</b><button id="closeStockEditBtn" class="soft">Close</button></div>
+      <div class="modal-body">
+        <div class="muted" id="editStockTitle"></div>
+        <label for="editStockQty">Stock Quantity (Remaining)</label>
+        <input id="editStockQty" type="number" min="0" step="1">
+        <label for="editStockPrice">Price</label>
+        <input id="editStockPrice" type="number" min="0" step="1">
+        <label for="editStockStatus">Stock Status</label>
+        <input id="editStockStatus" placeholder="In Stock / Low Stock / Out of Stock">
+        <div id="editStockError" class="muted" style="color:#b32727"></div>
+        <div class="act">
+          <button id="saveStockEditBtn" class="pri">Save</button>
+          <button id="cancelStockEditBtn" class="soft">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="pos_seed.js"></script>
+  <script>
+    const EXPECTED={count:117,min:85,max:495,checksum:"ceb54b3b650b4568b8d73b785000c20c938171becf6914478afdf967ee273670"};
+    const LOGIN_PASSWORD="NIMI";
+    const LOGIN_KEY="bookstore_pos_logged_in";
+    const OWNER_EMAIL="ss190775@gmail.com";
+    const KEYS={TX:"bookstore_pos_tx_v4",C:"bookstore_pos_customer_v4",SB:"bookstore_pos_stock_base_v1",SS:"bookstore_pos_stock_sales_v3"};
+    const EMAILJS_CONFIG={enabled:false,publicKey:"",serviceId:"",templateId:"",vars:{to:"to_email",cc:"cc_email",subject:"subject",body:"text_body",customer:"customer_name",receipt:"receipt_no"}};
+
+    const s={books:[],cart:[],sel:null,tx:[],selectedTxNo:"",c:{name:"",phone:"",email:"",address:"",pincode:""},stockRows:[],stockSales:{},editingStockId:null,appInitialized:false};
+    const $=id=>document.getElementById(id),fmt=v=>`Rs ${Number(v).toFixed(2)}`;
+    const el={
+      loginScreen:$("loginScreen"),loginPassword:$("loginPassword"),loginBtn:$("loginBtn"),loginError:$("loginError"),appRoot:$("appRoot"),logoutBtn:$("logoutBtn"),
+      status:$("status"),bookCount:$("bookCount"),q:$("q"),dd:$("dd"),add:$("add"),sel:$("sel"),
+      cart:$("cart"),sub:$("sub"),tier:$("tier"),disc:$("disc"),tot:$("tot"),clear:$("clear"),pdf:$("pdf"),
+      history:$("history"),txDetail:$("txDetail"),cn:$("cn"),cp:$("cp"),ce:$("ce"),ca:$("ca"),cz:$("cz"),cerr:$("cerr"),
+      stockBtn:$("stockBtn"),stockModal:$("stockModal"),closeStockBtn:$("closeStockBtn"),
+      stockSearch:$("stockSearch"),stockBody:$("stockBody"),stockSummary:$("stockSummary"),
+      stockEditModal:$("stockEditModal"),closeStockEditBtn:$("closeStockEditBtn"),
+      editStockTitle:$("editStockTitle"),editStockQty:$("editStockQty"),editStockPrice:$("editStockPrice"),
+      editStockStatus:$("editStockStatus"),editStockError:$("editStockError"),
+      saveStockEditBtn:$("saveStockEditBtn"),cancelStockEditBtn:$("cancelStockEditBtn")
+    };
+
+    const discRate=x=>x>=35000?0.35:x>=10001?0.25:x>=5001?0.20:x>=3001?0.10:0;
+    const totals=()=>{const sub=s.cart.reduce((a,b)=>a+b.price*b.qty,0),r=discRate(sub),d=sub*r;return{sub,r,d,t:sub-d}};
+    const hash=async txt=>[...(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(txt))))].map(v=>v.toString(16).padStart(2,"0")).join("");
+
+    const parseBooks=csv=>csv.split(/\r?\n/).filter(Boolean).slice(1).map(l=>{const f=l.indexOf(","),k=l.lastIndexOf(",");if(f<0||k<=f)return null;const id=Number(l.slice(0,f).trim()),title=l.slice(f+1,k).trim(),price=Number(l.slice(k+1).trim());return Number.isFinite(id)&&title&&Number.isFinite(price)?{id,title,price}:null}).filter(Boolean);
+    function parseStock(csv){
+      const fixed=csv.replace(/\uFEFF/g,"").replace(/"Remaining\s*\r?\n\s*Stock"/i,"Remaining Stock");
+      const lines=fixed.split(/\r?\n/).filter(Boolean);
+      if(lines.length<2)return [];
+      const head=lines[0].split(",").map(x=>x.replace(/"/g,"").trim().toLowerCase());
+      const idx=(name)=>head.findIndex(h=>h===name.toLowerCase());
+      const idI=idx("sr.no.");
+      const titleI=idx("title");
+      const totalI=idx("total stock");
+      const salesI=idx("sales");
+      const stockI=idx("stock");
+      const remI=idx("remaining stock");
+      return lines.slice(1).map(line=>{
+        const p=line.split(",").map(x=>x.replace(/"/g,"").trim());
+        const id=Number(p[idI]);
+        if(!Number.isFinite(id))return null;
+        const title=p[titleI]||"";
+        const total=Number(p[totalI]);
+        const sales=Number(salesI>=0?p[salesI]:"");
+        const remaining=Number(stockI>=0?p[stockI]:(remI>=0?p[remI]:""));
+        const baseSales=Number.isFinite(sales)?sales:(Number.isFinite(total)&&Number.isFinite(remaining)?(total-remaining):0);
+        const priceIdx=head.findIndex(h=>h==="unit price");
+        const price=Number(priceIdx>=0?p[priceIdx]:"");
+        return title?{id,title,prevStock:Number.isFinite(total)?total:0,baseRemaining:Number.isFinite(remaining)?remaining:0,baseSales:Number.isFinite(baseSales)?baseSales:0,price:Number.isFinite(price)?price:0,status:""}:null;
+      }).filter(Boolean);
+    }
+
+    async function loadBooksCsv(file){
+      const csv=await file.text(),books=parseBooks(csv),prices=books.map(x=>x.price),sig=books.map(x=>`${x.title}|${x.price};`).join("");
+      const ok={count:books.length===EXPECTED.count,min:Math.min(...prices)===EXPECTED.min,max:Math.max(...prices)===EXPECTED.max,checksum:(await hash(sig))===EXPECTED.checksum};
+      if(ok.count&&ok.min&&ok.max&&ok.checksum){s.books=books;el.status.className="status ok";el.status.textContent=`Catalog verified: ${books.length} books loaded (Rs ${EXPECTED.min}-Rs ${EXPECTED.max}).`;} 
+      else{el.status.className="status bad";el.status.textContent=`Validation failed. Count:${ok.count} Min:${ok.min} Max:${ok.max} Checksum:${ok.checksum}`;}
+      el.bookCount.textContent=`${books.length} books`;
+    }
+    async function loadStockCsv(file){
+      const csv=await file.text();
+      const rows=parseStock(csv);
+      if(!rows.length){return;}
+      s.stockRows=rows;
+      localStorage.setItem(KEYS.SB,JSON.stringify(rows));
+      drawStock();
+    }
+
+    async function tryLoadDefault(){
+      try{const rb=await fetch("Books CSV-117.csv");if(rb.ok){await loadBooksCsv(new File([await rb.text()],"Books CSV-117.csv",{type:"text/csv"}));}}catch(_){}
+      try{const rs=await fetch("Stock for COde.csv");if(rs.ok){await loadStockCsv(new File([await rs.text()],"Stock for COde.csv",{type:"text/csv"}));}}catch(_){}
+    }
+
+    function drawSearch(){
+      const q=el.q.value.trim().toLowerCase();s.sel=null;el.add.disabled=true;el.sel.textContent="";
+      if(q.length<2){el.dd.style.display="none";return;}
+      const m=s.books.filter(b=>b.title.toLowerCase().includes(q)).slice(0,10);
+      el.dd.innerHTML="";if(!m.length){el.dd.style.display="none";return;}
+      m.forEach(b=>{const d=document.createElement("div");d.innerHTML=`<span>${b.title}</span><b>${fmt(b.price)}</b>`;d.onclick=()=>{s.sel=b;el.q.value=b.title;el.add.disabled=false;el.sel.textContent=`Selected: #${b.id} | ${fmt(b.price)}`;el.dd.style.display="none"};el.dd.appendChild(d)});
+      el.dd.style.display="block";
+    }
+
+    function addToCart(){if(!s.sel)return;const e=s.cart.find(i=>i.id===s.sel.id);if(e)e.qty+=1;else s.cart.push({...s.sel,qty:1});s.sel=null;el.q.value="";el.add.disabled=true;el.sel.textContent="";drawCart();}
+    function drawCart(){
+      if(!s.cart.length)el.cart.innerHTML='<tr><td colspan="5" class="muted">Cart is empty.</td></tr>';
+      else{el.cart.innerHTML="";s.cart.forEach(i=>{const tr=document.createElement("tr");tr.innerHTML=`<td>${i.title}</td><td>${fmt(i.price)}</td><td><input class="qty" type="number" min="1" value="${i.qty}" data-q="${i.id}"></td><td>${fmt(i.price*i.qty)}</td><td><button class="danger" data-r="${i.id}">X</button></td>`;el.cart.appendChild(tr)})}
+      const t=totals();el.sub.textContent=fmt(t.sub);el.tier.textContent=`${Math.round(t.r*100)}%`;el.disc.textContent=fmt(t.d);el.tot.textContent=fmt(t.t);
+    }
+
+    function getCustomer(){return{name:el.cn.value.trim(),phone:el.cp.value.trim(),email:el.ce.value.trim(),address:el.ca.value.trim(),pincode:el.cz.value.trim()};}
+    const vCust=c=>!c.name?"Name is required.":!/^[0-9]{10}$/.test(c.phone)?"Phone must be 10 digits.":!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)?"Valid email required.":!c.address?"Address is required.":!/^[0-9]{6}$/.test(c.pincode)?"Pincode must be 6 digits.":"";
+    function persistCustomer(){s.c=getCustomer();localStorage.setItem(KEYS.C,JSON.stringify(s.c));el.cerr.textContent=vCust(s.c);}
+    function persistStockSales(){localStorage.setItem(KEYS.SS,JSON.stringify(s.stockSales));}
+    const saveTx=()=>localStorage.setItem(KEYS.TX,JSON.stringify(s.tx.slice(0,50)));
+
+    function drawHistory(){
+      if(!s.tx.length){el.history.innerHTML='<div class="muted">No transactions yet.</div>';drawTxDetail(null);return;}
+      el.history.innerHTML="";
+      s.tx.forEach(x=>{const active=s.selectedTxNo===x.no?"<span class='chip'>Open</span>":"";const d=document.createElement("div");d.className="item";d.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px"><b>${x.no}</b>${active}</div><div class="muted">${x.date}</div><div>${x.customer.name} | Items: ${x.items} | Total: <b>${fmt(x.total)}</b></div><div class="act"><button class="soft" data-open-tx="${x.no}">View Items</button></div>`;el.history.appendChild(d)});
+      const tx=s.tx.find(x=>x.no===s.selectedTxNo)||s.tx[0];s.selectedTxNo=tx.no;drawTxDetail(tx);
+    }
+
+    function drawTxDetail(tx){
+      if(!tx){el.txDetail.textContent="Select a transaction to review items and amounts.";return;}
+      const rows=(tx.lines||[]).map(l=>`<tr><td>${l.title}</td><td>${fmt(l.price)}</td><td>${l.qty}</td><td>${fmt(l.amount)}</td></tr>`).join("");
+      el.txDetail.innerHTML=`<div><b>${tx.no}</b></div><div class='muted'>${tx.date}</div><div class='muted'>Customer: ${tx.customer.name} (${tx.customer.email})</div><table style='margin-top:8px'><thead><tr><th>Item</th><th>Price</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div style='margin-top:8px'><b>Subtotal:</b> ${fmt(tx.sub)} | <b>Discount:</b> ${fmt(tx.disc)} (${tx.dp}%) | <b>Total:</b> ${fmt(tx.total)}</div>`;
+    }
+
+    function openStockEdit(id){
+      const row=s.stockRows.find(r=>r.id===id);
+      if(!row)return;
+      const posSales=s.stockSales[id]||0;
+      const currentRemaining=row.baseRemaining-posSales;
+      s.editingStockId=id;
+      el.editStockTitle.textContent=`${row.id} | ${row.title}`;
+      el.editStockQty.value=Number.isFinite(currentRemaining)?currentRemaining:0;
+      el.editStockPrice.value=Number.isFinite(row.price)?row.price:0;
+      el.editStockStatus.value=(row.status && row.status.trim())?row.status:computeStatus(currentRemaining);
+      el.editStockError.textContent="";
+      el.stockEditModal.style.display="flex";
+    }
+
+    function closeStockEdit(){
+      s.editingStockId=null;
+      el.stockEditModal.style.display="none";
+    }
+
+    function saveStockEdit(){
+      const id=s.editingStockId;
+      if(!id)return;
+      const row=s.stockRows.find(r=>r.id===id);
+      if(!row)return;
+      const qty=Number(el.editStockQty.value);
+      const price=Number(el.editStockPrice.value);
+      const status=String(el.editStockStatus.value||"").trim();
+      if(!Number.isFinite(qty) || qty<0){el.editStockError.textContent="Quantity must be 0 or more.";return;}
+      if(!Number.isFinite(price) || price<0){el.editStockError.textContent="Price must be 0 or more.";return;}
+      if(!status){el.editStockError.textContent="Stock status is required.";return;}
+
+      const posSales=s.stockSales[id]||0;
+      row.baseRemaining=qty+posSales;
+      row.baseSales=Math.max(0, row.prevStock - row.baseRemaining);
+      row.price=price;
+      row.status=status;
+      localStorage.setItem(KEYS.SB,JSON.stringify(s.stockRows));
+      drawStock();
+      closeStockEdit();
+    }
+
+    function addTx(t){
+      const n=new Date(),no=`REC-${n.getFullYear()}${String(n.getMonth()+1).padStart(2,"0")}${String(n.getDate()).padStart(2,"0")}-${String(n.getHours()).padStart(2,"0")}${String(n.getMinutes()).padStart(2,"0")}${String(n.getSeconds()).padStart(2,"0")}`;
+      const lines=s.cart.map(i=>({id:i.id,title:i.title,price:i.price,qty:i.qty,amount:i.price*i.qty}));
+      const tx={no,date:n.toLocaleString("en-IN"),customer:{...s.c},items:lines.reduce((a,b)=>a+b.qty,0),lines,dp:Math.round(t.r*100),sub:t.sub,disc:t.d,total:t.t};
+      s.tx.unshift(tx);s.tx=s.tx.slice(0,50);s.selectedTxNo=tx.no;saveTx();drawHistory();return tx;
+    }
+
+    function applySaleToStock(lines){
+      lines.forEach(l=>{s.stockSales[l.id]=(s.stockSales[l.id]||0)+l.qty;});
+      persistStockSales();
+      drawStock();
+    }
+
+    function getRemainingStock(id){
+      const row=s.stockRows.find(r=>r.id===id);
+      if(!row)return 0;
+      const posSales=s.stockSales[id]||0;
+      return row.baseRemaining-posSales;
+    }
+
+    function computeStatus(remaining){
+      if(remaining <= 0) return "Out of Stock";
+      if(remaining <= 5) return "Low Stock";
+      return "In Stock";
+    }
+
+    function validateStock(lines){
+      const issues=[];
+      lines.forEach(l=>{
+        const remaining=getRemainingStock(l.id);
+        if(l.qty>remaining){
+          issues.push(`${l.title} has only ${remaining} left.`);
+        }
+      });
+      return issues;
+    }
+
+    function drawStock(){
+      const q=el.stockSearch.value.trim().toLowerCase();
+      const rows=s.stockRows.filter(r=>!q||String(r.id).includes(q)||r.title.toLowerCase().includes(q));
+      if(!rows.length){el.stockBody.innerHTML='<tr><td colspan="8" class="muted">No matching stock rows.</td></tr>';el.stockSummary.textContent='0 rows';return;}
+      el.stockBody.innerHTML="";
+      rows.forEach(r=>{
+        const posSales=s.stockSales[r.id]||0;
+        const sales=r.baseSales+posSales;
+        const rem=r.baseRemaining-posSales;
+        const status=(r.status && r.status.trim())?r.status:computeStatus(rem);
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td>${r.id}</td><td>${r.title}</td><td>${r.prevStock}</td><td>${sales}</td><td>${rem}</td><td>${fmt(r.price||0)}</td><td>${status}</td><td><button class="soft" data-edit-stock="${r.id}">Edit</button></td>`;
+        el.stockBody.appendChild(tr);
+      });
+      el.stockSummary.textContent=`${rows.length} rows`;
+    }
+
+    function buildEmailText(tx,t){
+      const lines=tx.lines.map(i=>`- ${i.title} | Price: ${fmt(i.price)} | Qty: ${i.qty} | Amount: ${fmt(i.amount)}`);
+      return [
+        `Dear ${s.c.name},`,
+        "",
+        "Thank you for your purchase from our bookstore.",
+        `Receipt No: ${tx.no}`,
+        `Date: ${tx.date}`,
+        "",
+        "Purchased Items:",
+        ...lines,
+        "",
+        `Subtotal: ${fmt(t.sub)}`,
+        `Discount (${Math.round(t.r*100)}%): ${fmt(t.d)}`,
+        `Grand Total: ${fmt(t.t)}`,
+        "",
+        "Thank you."
+      ].join("\n");
+    }
+
+    async function sendReceiptEmail(tx,t){
+      const body=buildEmailText(tx,t),subject=`Thank you for your purchase | ${tx.no}`;
+      if(EMAILJS_CONFIG.enabled && window.emailjs){
+        emailjs.init({publicKey:EMAILJS_CONFIG.publicKey});
+        const p={};p[EMAILJS_CONFIG.vars.to]=s.c.email;p[EMAILJS_CONFIG.vars.cc]=OWNER_EMAIL;p[EMAILJS_CONFIG.vars.subject]=subject;p[EMAILJS_CONFIG.vars.body]=body;p[EMAILJS_CONFIG.vars.customer]=s.c.name;p[EMAILJS_CONFIG.vars.receipt]=tx.no;
+        await emailjs.send(EMAILJS_CONFIG.serviceId,EMAILJS_CONFIG.templateId,p);
+        return;
+      }
+      window.location.href=`mailto:${s.c.email},${OWNER_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+
+    function pdf(tx,t){
+      const {jsPDF}=window.jspdf,doc=new jsPDF();let y=14;
+      doc.setFillColor(15,91,207);doc.rect(0,0,210,28,"F");doc.setTextColor(255,255,255);doc.setFontSize(18);doc.text("Bookstore POS Receipt",14,16);doc.setFontSize(10);doc.text(tx.no,14,23);doc.text(tx.date,150,23,{align:"right"});
+      y=36;doc.setTextColor(20,30,45);doc.setFontSize(11);doc.text(`Customer: ${s.c.name}`,14,y);y+=6;doc.text(`Phone: ${s.c.phone}`,14,y);y+=6;doc.text(`Email: ${s.c.email}`,14,y);y+=6;doc.text(`Address: ${s.c.address}, ${s.c.pincode}`,14,y);y+=10;
+      doc.setFillColor(230,239,255);doc.rect(14,y-5,182,8,"F");doc.setFontSize(10);doc.text("Book",16,y);doc.text("Price",132,y);doc.text("Qty",154,y);doc.text("Amount",176,y,{align:"right"});y+=6;
+      tx.lines.forEach(i=>{if(y>276){doc.addPage();y=20;}doc.text(i.title.length>70?`${i.title.slice(0,67)}...`:i.title,16,y);doc.text(fmt(i.price),132,y);doc.text(String(i.qty),154,y);doc.text(fmt(i.amount),176,y,{align:"right"});y+=6;});
+      y+=4;doc.line(14,y,196,y);y+=8;doc.text(`Subtotal: ${fmt(t.sub)}`,130,y,{align:"right"});y+=6;doc.text(`Discount (${Math.round(t.r*100)}%): ${fmt(t.d)}`,130,y,{align:"right"});y+=6;doc.setFontSize(13);doc.text(`Grand Total: ${fmt(t.t)}`,130,y,{align:"right"});
+      y+=12;doc.setFontSize(9);doc.setTextColor(95,110,132);doc.text("Tiers: <=3000=0%, 3001-5000=10%, 5001-10000=20%, 10001-35000=25%, >=35000=35%",14,y);
+      doc.save(`${tx.no}.pdf`);
+    }
+
+    async function checkout(){
+      if(!s.cart.length){alert("Add at least one book.");return;}
+      persistCustomer();
+      const ce=vCust(s.c);
+      if(ce){el.cerr.textContent=ce;alert(`Customer details required: ${ce}`);return;}
+      const stockIssues=validateStock(s.cart);
+      if(stockIssues.length){
+        alert(`Stock not sufficient:\n${stockIssues.join("\n")}`);
+        return;
+      }
+      const t=totals(),tx=addTx(t);
+      applySaleToStock(tx.lines);
+      pdf(tx,t);
+      try{await sendReceiptEmail(tx,t);}catch(_){alert("Email send failed.");}
+      s.cart=[];drawCart();
+      alert("Purchase completed, receipt generated, and stock updated.");
+    }
+
+    function showLogin(){
+      el.appRoot.style.display="none";
+      el.loginScreen.style.display="flex";
+      el.loginPassword.value="";
+      el.loginError.textContent="";
+      el.loginPassword.focus();
+    }
+
+    function showApp(){
+      el.loginScreen.style.display="none";
+      el.appRoot.style.display="grid";
+    }
+
+    function handleLogin(){
+      const value=String(el.loginPassword.value||"").trim();
+      if(value!==LOGIN_PASSWORD){
+        el.loginError.textContent="Incorrect Password";
+        return;
+      }
+      sessionStorage.setItem(LOGIN_KEY,"1");
+      showApp();
+      initApp();
+    }
+
+    function handleLogout(){
+      sessionStorage.removeItem(LOGIN_KEY);
+      showLogin();
+    }
+
+    function initApp(){
+      if(s.appInitialized){return;}
+      s.appInitialized=true;
+      try{
+        const tx=JSON.parse(localStorage.getItem(KEYS.TX)||"[]"),c=JSON.parse(localStorage.getItem(KEYS.C)||"{}"),sb=JSON.parse(localStorage.getItem(KEYS.SB)||"[]"),ss=JSON.parse(localStorage.getItem(KEYS.SS)||"{}");
+        if(Array.isArray(tx))s.tx=tx;
+        if(c&&typeof c==="object")s.c={...s.c,...c};
+        if(Array.isArray(sb))s.stockRows=sb.map(r=>({
+          ...r,
+          price:Number(r.price||0),
+          status:String(r.status||"")
+        }));
+        if(ss&&typeof ss==="object")s.stockSales=ss;
+      }catch(_){}
+
+      if(window.POS_SEED && Array.isArray(window.POS_SEED.books) && window.POS_SEED.books.length){
+        s.books = window.POS_SEED.books.map(b=>({id:Number(b.id),title:String(b.title),price:Number(b.price)}));
+        el.bookCount.textContent = `${s.books.length} books`;
+        el.status.className = "status ok";
+        el.status.textContent = "Catalog auto-loaded.";
+      }
+      if(window.POS_SEED && Array.isArray(window.POS_SEED.stock) && window.POS_SEED.stock.length){
+        s.stockRows = window.POS_SEED.stock.map(r=>({
+          id:Number(r.id),
+          title:String(r.title),
+          prevStock:Number(r.prevStock),
+          baseSales:Number(r.baseSales),
+          baseRemaining:Number(r.baseRemaining),
+          price:Number(r.price||0),
+          status:String(r.status||"")
+        }));
+        localStorage.setItem(KEYS.SB,JSON.stringify(s.stockRows));
+      }
+
+      el.cn.value=s.c.name;el.cp.value=s.c.phone;el.ce.value=s.c.email;el.ca.value=s.c.address;el.cz.value=s.c.pincode;
+
+      drawCart();drawHistory();drawStock();
+      el.q.oninput=drawSearch;el.add.onclick=addToCart;document.addEventListener("click",e=>{if(!el.dd.contains(e.target)&&e.target!==el.q)el.dd.style.display="none"});
+      el.cart.oninput=e=>{const id=Number(e.target.getAttribute("data-q"));if(id){const it=s.cart.find(x=>x.id===id);if(it){it.qty=Math.max(1,Number(e.target.value)||1);drawCart();}}};
+      el.cart.onclick=e=>{const id=Number(e.target.getAttribute("data-r"));if(id){s.cart=s.cart.filter(x=>x.id!==id);drawCart();}};
+      el.clear.onclick=()=>{s.cart=[];drawCart();};el.pdf.onclick=checkout;
+
+      [el.cn,el.cp,el.ce,el.ca,el.cz].forEach(i=>i.addEventListener("input",persistCustomer));
+      el.history.onclick=e=>{const no=e.target.getAttribute("data-open-tx");if(no){s.selectedTxNo=no;drawHistory();}};
+
+      el.stockBtn.onclick=()=>{el.stockModal.style.display="flex";drawStock();};
+      el.closeStockBtn.onclick=()=>{el.stockModal.style.display="none";};
+      el.stockModal.onclick=e=>{if(e.target===el.stockModal)el.stockModal.style.display="none";};
+      el.stockSearch.oninput=drawStock;
+      el.stockBody.onclick=e=>{const id=Number(e.target.getAttribute("data-edit-stock"));if(id)openStockEdit(id);};
+
+      el.closeStockEditBtn.onclick=closeStockEdit;
+      el.cancelStockEditBtn.onclick=closeStockEdit;
+      el.saveStockEditBtn.onclick=saveStockEdit;
+      el.stockEditModal.onclick=e=>{if(e.target===el.stockEditModal)closeStockEdit();};
+
+      tryLoadDefault();
+    }
+
+    function init(){
+      el.loginBtn.onclick=handleLogin;
+      el.loginPassword.addEventListener("keydown",e=>{if(e.key==="Enter")handleLogin();});
+      el.loginPassword.addEventListener("input",()=>{el.loginError.textContent="";});
+      el.logoutBtn.onclick=handleLogout;
+
+      if(sessionStorage.getItem(LOGIN_KEY)==="1"){
+        showApp();
+        initApp();
+      }else{
+        showLogin();
+      }
+    }
+    init();
+  </script>
+</body>
+</html>
