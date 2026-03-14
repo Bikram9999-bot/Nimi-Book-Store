@@ -8,6 +8,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use(async (req, res, next) => {
+  try {
+    await connectDb();
+    return next();
+  } catch (err) {
+    return next(err);
+  }
+});
+
 app.get("/", (req, res) => {
   res.status(200).send("POS Backend Running");
 });
@@ -18,8 +27,9 @@ app.get("/health", (req, res) => {
 
 app.use("/api/books", bookRoutes);
 
-connectDb().catch((err) => {
-  console.error("Failed to connect to MongoDB:", err.message);
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ error: err.message || "Server error" });
 });
 
 module.exports = app;
