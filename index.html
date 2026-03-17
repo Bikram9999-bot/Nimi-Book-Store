@@ -218,6 +218,10 @@
     function applyBooksFromApi(books){
       // Map Mongo books to local state, preserving prevStock/sales if already known
       const existingById = new Map(s.stockRows.map(r=>[String(r.id), r]));
+      const seedByTitle = new Map(
+        (window.POS_SEED && Array.isArray(window.POS_SEED.stock) ? window.POS_SEED.stock : [])
+          .map(r=>[String(r.title||"").toLowerCase(), r])
+      );
       s.books = books.map(b=>({
         id:String(b._id),
         title:String(b.title),
@@ -229,9 +233,13 @@
         const existing = existingById.get(id);
         const remaining = Number(b.stock)||0;
         const apiTotal = Number(b.totalStock);
+        const seed = seedByTitle.get(String(b.title||"").toLowerCase());
+        const seedPrev = seed ? Number(seed.prevStock) : NaN;
         const prevStock = Number.isFinite(apiTotal) && apiTotal > 0
           ? apiTotal
-          : Math.max(Number(existing?.prevStock)||0, remaining);
+          : (Number.isFinite(seedPrev) && seedPrev > 0
+            ? seedPrev
+            : Math.max(Number(existing?.prevStock)||0, remaining));
         const baseSales = Math.max(0, prevStock - remaining);
         return {
           id,
@@ -241,7 +249,7 @@
           baseRemaining: remaining,
           price:Number(b.price)||0,
           status:String(b.status||""),
-          serialNo:Number(b.serialNo)||0
+          serialNo:Number(b.serialNo)||Number(seed?.id)||0
         };
       });
       s.stockSales = {};

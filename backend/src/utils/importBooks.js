@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 const { connectDb } = require("../db");
 const Book = require("../models/Book");
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, "..", "..", ".env") });
 
 function normalizeHeader(value) {
   return String(value || "")
