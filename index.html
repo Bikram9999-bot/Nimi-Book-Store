@@ -45,7 +45,14 @@
     .modal-head{padding:12px 14px;background:#f3f8ff;border-bottom:1px solid var(--l);display:flex;justify-content:space-between;align-items:center}
     .modal-body{padding:12px 14px}
     .row{display:grid;grid-template-columns:1fr auto;gap:8px}
+    .receipt-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:12px}
+    .receipt-list{max-height:60vh;overflow:auto;display:grid;gap:8px}
+    .receipt-entry{border:1px solid var(--l);border-radius:9px;padding:9px 10px;background:#fbfdff;cursor:pointer}
+    .receipt-entry:hover{background:#f4f8ff}
+    .receipt-entry.active{border-color:#9fb9e8;background:#eef5ff}
+    .receipt-detail{border:1px solid var(--l);border-radius:9px;padding:10px;background:#fbfdff;max-height:60vh;overflow:auto}
     @media (max-width:1024px){.wrap{grid-template-columns:1fr}}
+    @media (max-width:900px){.receipt-grid{grid-template-columns:1fr}.receipt-detail{max-height:unset}}
   </style>
 </head>
 <body>
@@ -99,7 +106,10 @@
           <div id="cerr" class="muted" style="color:#b32727"></div>
         </div>
 
-        <p class="side-title" style="margin-top:0">Transactions</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <p class="side-title" style="margin-top:0">Transactions</p>
+          <button id="receiptHistoryBtn" class="soft">View Receipt History</button>
+        </div>
         <div id="history" class="hist"><div class="muted">No transactions yet.</div></div>
 
         <div class="side-block tx-detail">
@@ -141,6 +151,20 @@
     </div>
   </div>
 
+  <div id="receiptHistoryModal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head"><b>Receipt History</b><button id="closeReceiptHistoryBtn" class="soft">Close</button></div>
+      <div class="modal-body">
+        <label for="receiptSearch">Search receipts</label>
+        <div class="row"><input id="receiptSearch" placeholder="Search by receipt ID or customer name"><span class="muted" id="receiptCount"></span></div>
+        <div class="receipt-grid" style="margin-top:10px">
+          <div id="receiptList" class="receipt-list"></div>
+          <div id="receiptDetail" class="receipt-detail muted">Select a receipt to view details.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="pos_seed.js"></script>
   <script>
     const EXPECTED={count:117,min:85,max:495,checksum:"ceb54b3b650b4568b8d73b785000c20c938171becf6914478afdf967ee273670"};
@@ -152,7 +176,7 @@
     const KEYS={TX:"bookstore_pos_tx_v4",C:"bookstore_pos_customer_v4",SB:"bookstore_pos_stock_base_v1",SS:"bookstore_pos_stock_sales_v3"};
     const EMAILJS_CONFIG={enabled:false,publicKey:"",serviceId:"",templateId:"",vars:{to:"to_email",cc:"cc_email",subject:"subject",body:"text_body",customer:"customer_name",receipt:"receipt_no"}};
 
-    const s={books:[],cart:[],sel:null,tx:[],selectedTxNo:"",c:{name:"",phone:"",email:"",address:"",pincode:""},stockRows:[],stockSales:{},editingStockId:null,appInitialized:false};
+    const s={books:[],cart:[],sel:null,tx:[],selectedTxNo:"",selectedReceiptNo:"",c:{name:"",phone:"",email:"",address:"",pincode:""},stockRows:[],stockSales:{},editingStockId:null,appInitialized:false};
     const $=id=>document.getElementById(id),fmt=v=>`Rs ${Number(v).toFixed(2)}`;
     const el={
       loginScreen:$("loginScreen"),loginPassword:$("loginPassword"),loginBtn:$("loginBtn"),loginError:$("loginError"),appRoot:$("appRoot"),logoutBtn:$("logoutBtn"),syncStatus:$("syncStatus"),
@@ -164,7 +188,10 @@
       stockEditModal:$("stockEditModal"),closeStockEditBtn:$("closeStockEditBtn"),
       editStockTitle:$("editStockTitle"),editStockQty:$("editStockQty"),editStockPrice:$("editStockPrice"),
       editStockStatus:$("editStockStatus"),editStockError:$("editStockError"),
-      saveStockEditBtn:$("saveStockEditBtn"),cancelStockEditBtn:$("cancelStockEditBtn")
+      saveStockEditBtn:$("saveStockEditBtn"),cancelStockEditBtn:$("cancelStockEditBtn"),
+      receiptHistoryBtn:$("receiptHistoryBtn"),receiptHistoryModal:$("receiptHistoryModal"),
+      closeReceiptHistoryBtn:$("closeReceiptHistoryBtn"),receiptSearch:$("receiptSearch"),
+      receiptList:$("receiptList"),receiptCount:$("receiptCount"),receiptDetail:$("receiptDetail")
     };
 
     const discRate=x=>x>=35000?0.35:x>=10001?0.25:x>=5001?0.20:x>=3001?0.10:0;
@@ -378,6 +405,41 @@
       el.txDetail.innerHTML=`<div><b>${tx.no}</b></div><div class='muted'>${tx.date}</div><div class='muted'>Customer: ${tx.customer.name} (${tx.customer.email})</div><table style='margin-top:8px'><thead><tr><th>Item</th><th>Price</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div style='margin-top:8px'><b>Subtotal:</b> ${fmt(tx.sub)} | <b>Discount:</b> ${fmt(tx.disc)} (${tx.dp}%) | <b>Total:</b> ${fmt(tx.total)}</div>`;
     }
 
+    function drawReceiptHistory(){
+      const q=el.receiptSearch.value.trim().toLowerCase();
+      const list=(s.tx||[]).filter(tx=>{
+        const name=String(tx.customer?.name||"").toLowerCase();
+        return !q || String(tx.no||"").toLowerCase().includes(q) || name.includes(q);
+      });
+      el.receiptCount.textContent=`${list.length} receipts`;
+      if(!list.length){
+        el.receiptList.innerHTML='<div class="muted">No receipts found.</div>';
+        el.receiptDetail.textContent="Select a receipt to view details.";
+        return;
+      }
+      el.receiptList.innerHTML="";
+      list.forEach(tx=>{
+        const active=s.selectedReceiptNo===tx.no;
+        const div=document.createElement("div");
+        div.className=`receipt-entry${active?" active":""}`;
+        div.setAttribute("data-receipt-id",tx.no);
+        div.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px"><b>${tx.no}</b><span class="muted">${fmt(tx.total)}</span></div><div class="muted">${tx.date}</div><div>${tx.customer?.name||""}</div>`;
+        el.receiptList.appendChild(div);
+      });
+      const current=list.find(x=>x.no===s.selectedReceiptNo)||list[0];
+      s.selectedReceiptNo=current?current.no:"";
+      drawReceiptDetail(current);
+    }
+
+    function drawReceiptDetail(tx){
+      if(!tx){
+        el.receiptDetail.textContent="Select a receipt to view details.";
+        return;
+      }
+      const rows=(tx.lines||[]).map(l=>`<tr><td>${l.title}</td><td>${fmt(l.price)}</td><td>${l.qty}</td><td>${fmt(l.amount)}</td></tr>`).join("");
+      el.receiptDetail.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>${tx.no}</b><div class="muted">${tx.date}</div></div><button class="soft" data-receipt-back="1">Back to list</button></div><div class="muted" style="margin-top:6px">Customer: ${tx.customer?.name||""} (${tx.customer?.email||""})</div><table style="margin-top:8px"><thead><tr><th>Item</th><th>Price</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div style="margin-top:8px"><b>Subtotal:</b> ${fmt(tx.sub)} | <b>Discount:</b> ${fmt(tx.disc)} (${tx.dp}%) | <b>Total:</b> ${fmt(tx.total)}</div>`;
+    }
+
     function openStockEdit(id){
       const row=s.stockRows.find(r=>r.id===id);
       if(!row)return;
@@ -433,7 +495,9 @@
       const n=new Date(),no=`REC-${n.getFullYear()}${String(n.getMonth()+1).padStart(2,"0")}${String(n.getDate()).padStart(2,"0")}-${String(n.getHours()).padStart(2,"0")}${String(n.getMinutes()).padStart(2,"0")}${String(n.getSeconds()).padStart(2,"0")}`;
       const lines=s.cart.map(i=>({id:i.id,title:i.title,price:i.price,qty:i.qty,amount:i.price*i.qty}));
       const tx={no,date:n.toLocaleString("en-IN"),customer:{...s.c},items:lines.reduce((a,b)=>a+b.qty,0),lines,dp:Math.round(t.r*100),sub:t.sub,disc:t.d,total:t.t};
-      s.tx.unshift(tx);s.tx=s.tx.slice(0,50);s.selectedTxNo=tx.no;saveTx();drawHistory();return tx;
+      s.tx.unshift(tx);s.tx=s.tx.slice(0,50);s.selectedTxNo=tx.no;saveTx();drawHistory();
+      if(el.receiptHistoryModal.style.display==="flex"){drawReceiptHistory();}
+      return tx;
     }
 
     function applySaleToStock(lines){
@@ -640,6 +704,25 @@
       el.stockEditModal.onclick=e=>{if(e.target===el.stockEditModal)closeStockEdit();};
       const stockEditCard = el.stockEditModal.querySelector(".modal-card");
       if(stockEditCard){stockEditCard.onclick=e=>e.stopPropagation();}
+
+      el.receiptHistoryBtn.onclick=()=>{el.receiptHistoryModal.style.display="flex";el.receiptSearch.value="";drawReceiptHistory();};
+      el.closeReceiptHistoryBtn.onclick=()=>{el.receiptHistoryModal.style.display="none";};
+      el.receiptHistoryModal.onclick=e=>{if(e.target===el.receiptHistoryModal)el.receiptHistoryModal.style.display="none";};
+      const receiptCard = el.receiptHistoryModal.querySelector(".modal-card");
+      if(receiptCard){receiptCard.onclick=e=>e.stopPropagation();}
+      el.receiptSearch.oninput=drawReceiptHistory;
+      el.receiptList.onclick=e=>{
+        const card=e.target.closest("[data-receipt-id]");
+        if(!card)return;
+        s.selectedReceiptNo=card.getAttribute("data-receipt-id")||"";
+        drawReceiptHistory();
+      };
+      el.receiptDetail.onclick=e=>{
+        if(e.target && e.target.getAttribute("data-receipt-back")){
+          s.selectedReceiptNo="";
+          el.receiptDetail.textContent="Select a receipt to view details.";
+        }
+      };
 
       tryLoadDefault();
     }
