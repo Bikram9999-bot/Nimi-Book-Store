@@ -51,6 +51,7 @@
     .receipt-entry:hover{background:#f4f8ff}
     .receipt-entry.active{border-color:#9fb9e8;background:#eef5ff}
     .receipt-detail{border:1px solid var(--l);border-radius:9px;padding:10px;background:#fbfdff;max-height:60vh;overflow:auto}
+    .hidden{display:none}
     @media (max-width:1024px){.wrap{grid-template-columns:1fr}}
     @media (max-width:900px){.receipt-grid{grid-template-columns:1fr}.receipt-detail{max-height:unset}}
   </style>
@@ -112,9 +113,9 @@
         </div>
         <div id="history" class="hist"><div class="muted">No transactions yet.</div></div>
 
-        <div class="side-block tx-detail">
-          <p class="side-title">Transaction Review</p>
-          <div id="txDetail" class="muted">Select a transaction to review items and amounts.</div>
+        <div class="side-block" id="lastPurchaseCard">
+          <p class="side-title">Last Purchase</p>
+          <div id="lastPurchase" class="muted">No purchases yet.</div>
         </div>
       </div>
     </section>
@@ -182,7 +183,7 @@
       loginScreen:$("loginScreen"),loginPassword:$("loginPassword"),loginBtn:$("loginBtn"),loginError:$("loginError"),appRoot:$("appRoot"),logoutBtn:$("logoutBtn"),syncStatus:$("syncStatus"),
       status:$("status"),bookCount:$("bookCount"),q:$("q"),dd:$("dd"),add:$("add"),sel:$("sel"),
       cart:$("cart"),sub:$("sub"),tier:$("tier"),disc:$("disc"),tot:$("tot"),clear:$("clear"),pdf:$("pdf"),
-      history:$("history"),txDetail:$("txDetail"),cn:$("cn"),cp:$("cp"),ce:$("ce"),ca:$("ca"),cz:$("cz"),cerr:$("cerr"),
+      history:$("history"),lastPurchase:$("lastPurchase"),cn:$("cn"),cp:$("cp"),ce:$("ce"),ca:$("ca"),cz:$("cz"),cerr:$("cerr"),
       stockBtn:$("stockBtn"),stockModal:$("stockModal"),closeStockBtn:$("closeStockBtn"),
       stockSearch:$("stockSearch"),stockBody:$("stockBody"),stockSummary:$("stockSummary"),
       stockEditModal:$("stockEditModal"),closeStockEditBtn:$("closeStockEditBtn"),
@@ -393,16 +394,20 @@
     const saveTx=()=>localStorage.setItem(KEYS.TX,JSON.stringify(s.tx.slice(0,50)));
 
     function drawHistory(){
-      if(!s.tx.length){el.history.innerHTML='<div class="muted">No transactions yet.</div>';drawTxDetail(null);return;}
+      if(!s.tx.length){
+        el.history.innerHTML='<div class="muted">No transactions yet.</div>';
+        el.lastPurchase.textContent="No purchases yet.";
+        return;
+      }
       el.history.innerHTML="";
-      s.tx.forEach(x=>{const active=s.selectedTxNo===x.no?"<span class='chip'>Open</span>":"";const d=document.createElement("div");d.className="item";d.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px"><b>${x.no}</b>${active}</div><div class="muted">${x.date}</div><div>${x.customer.name} | Items: ${x.items} | Total: <b>${fmt(x.total)}</b></div><div class="act"><button class="soft" data-open-tx="${x.no}">View Items</button></div>`;el.history.appendChild(d)});
-      const tx=s.tx.find(x=>x.no===s.selectedTxNo)||s.tx[0];s.selectedTxNo=tx.no;drawTxDetail(tx);
-    }
-
-    function drawTxDetail(tx){
-      if(!tx){el.txDetail.textContent="Select a transaction to review items and amounts.";return;}
-      const rows=(tx.lines||[]).map(l=>`<tr><td>${l.title}</td><td>${fmt(l.price)}</td><td>${l.qty}</td><td>${fmt(l.amount)}</td></tr>`).join("");
-      el.txDetail.innerHTML=`<div><b>${tx.no}</b></div><div class='muted'>${tx.date}</div><div class='muted'>Customer: ${tx.customer.name} (${tx.customer.email})</div><table style='margin-top:8px'><thead><tr><th>Item</th><th>Price</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div style='margin-top:8px'><b>Subtotal:</b> ${fmt(tx.sub)} | <b>Discount:</b> ${fmt(tx.disc)} (${tx.dp}%) | <b>Total:</b> ${fmt(tx.total)}</div>`;
+      s.tx.forEach(x=>{
+        const d=document.createElement("div");
+        d.className="item";
+        d.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px"><b>${x.no}</b></div><div class="muted">${x.date}</div><div>${x.customer.name} | Items: ${x.items} | Total: <b>${fmt(x.total)}</b></div>`;
+        el.history.appendChild(d);
+      });
+      const last = s.tx[0];
+      el.lastPurchase.innerHTML=`<div><b>${last.no}</b></div><div class="muted">${last.date}</div><div>${last.customer.name}</div><div style="margin-top:6px"><b>Total:</b> ${fmt(last.total)}</div>`;
     }
 
     function drawReceiptHistory(){
@@ -414,6 +419,7 @@
       el.receiptCount.textContent=`${list.length} receipts`;
       if(!list.length){
         el.receiptList.innerHTML='<div class="muted">No receipts found.</div>';
+        el.receiptDetail.classList.add("hidden");
         el.receiptDetail.textContent="Select a receipt to view details.";
         return;
       }
@@ -423,19 +429,20 @@
         const div=document.createElement("div");
         div.className=`receipt-entry${active?" active":""}`;
         div.setAttribute("data-receipt-id",tx.no);
-        div.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px"><b>${tx.no}</b><span class="muted">${fmt(tx.total)}</span></div><div class="muted">${tx.date}</div><div>${tx.customer?.name||""}</div>`;
+        div.innerHTML=`<div><b>${tx.no}</b></div><div class="muted">${tx.date}</div>`;
         el.receiptList.appendChild(div);
       });
-      const current=list.find(x=>x.no===s.selectedReceiptNo)||list[0];
-      s.selectedReceiptNo=current?current.no:"";
+      const current=list.find(x=>x.no===s.selectedReceiptNo);
       drawReceiptDetail(current);
     }
 
     function drawReceiptDetail(tx){
       if(!tx){
+        el.receiptDetail.classList.add("hidden");
         el.receiptDetail.textContent="Select a receipt to view details.";
         return;
       }
+      el.receiptDetail.classList.remove("hidden");
       const rows=(tx.lines||[]).map(l=>`<tr><td>${l.title}</td><td>${fmt(l.price)}</td><td>${l.qty}</td><td>${fmt(l.amount)}</td></tr>`).join("");
       el.receiptDetail.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>${tx.no}</b><div class="muted">${tx.date}</div></div><button class="soft" data-receipt-back="1">Back to list</button></div><div class="muted" style="margin-top:6px">Customer: ${tx.customer?.name||""} (${tx.customer?.email||""})</div><table style="margin-top:8px"><thead><tr><th>Item</th><th>Price</th><th>Qty</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div style="margin-top:8px"><b>Subtotal:</b> ${fmt(tx.sub)} | <b>Discount:</b> ${fmt(tx.disc)} (${tx.dp}%) | <b>Total:</b> ${fmt(tx.total)}</div>`;
     }
@@ -688,8 +695,6 @@
       el.clear.onclick=()=>{s.cart=[];drawCart();};el.pdf.onclick=checkout;
 
       [el.cn,el.cp,el.ce,el.ca,el.cz].forEach(i=>i.addEventListener("input",persistCustomer));
-      el.history.onclick=e=>{const no=e.target.getAttribute("data-open-tx");if(no){s.selectedTxNo=no;drawHistory();}};
-
       el.stockBtn.onclick=()=>{el.stockModal.style.display="flex";drawStock();};
       el.closeStockBtn.onclick=()=>{el.stockModal.style.display="none";};
       el.stockModal.onclick=e=>{if(e.target===el.stockModal)el.stockModal.style.display="none";};
@@ -705,7 +710,7 @@
       const stockEditCard = el.stockEditModal.querySelector(".modal-card");
       if(stockEditCard){stockEditCard.onclick=e=>e.stopPropagation();}
 
-      el.receiptHistoryBtn.onclick=()=>{el.receiptHistoryModal.style.display="flex";el.receiptSearch.value="";drawReceiptHistory();};
+      el.receiptHistoryBtn.onclick=()=>{el.receiptHistoryModal.style.display="flex";el.receiptSearch.value="";s.selectedReceiptNo="";drawReceiptHistory();};
       el.closeReceiptHistoryBtn.onclick=()=>{el.receiptHistoryModal.style.display="none";};
       el.receiptHistoryModal.onclick=e=>{if(e.target===el.receiptHistoryModal)el.receiptHistoryModal.style.display="none";};
       const receiptCard = el.receiptHistoryModal.querySelector(".modal-card");
@@ -720,7 +725,7 @@
       el.receiptDetail.onclick=e=>{
         if(e.target && e.target.getAttribute("data-receipt-back")){
           s.selectedReceiptNo="";
-          el.receiptDetail.textContent="Select a receipt to view details.";
+          drawReceiptHistory();
         }
       };
 
