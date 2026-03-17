@@ -26,6 +26,7 @@ function parseCsv(content) {
   const titleIdx = idx("title");
   const serialIdx = idx("sr.no.");
   const priceIdx = headers.includes("price") ? idx("price") : idx("unit price");
+  const totalIdx = idx("total stock");
   const stockIdx = headers.includes("stock") ? idx("stock") : idx("remaining stock");
   const categoryIdx = idx("category");
   const statusIdx = idx("status");
@@ -35,6 +36,7 @@ function parseCsv(content) {
     const title = parts[titleIdx] || "";
     const serialNo = Number(serialIdx >= 0 ? parts[serialIdx] : "");
     const price = Number(parts[priceIdx]);
+    const totalStock = Number(totalIdx >= 0 ? parts[totalIdx] : "");
     const stock = Number(parts[stockIdx]);
     const category = categoryIdx >= 0 ? parts[categoryIdx] : "";
     const status = statusIdx >= 0 ? parts[statusIdx] : "";
@@ -43,6 +45,7 @@ function parseCsv(content) {
       title: String(title).trim(),
       price: Number.isFinite(price) ? price : 0,
       stock: Number.isFinite(stock) ? stock : 0,
+      totalStock: Number.isFinite(totalStock) ? totalStock : (Number.isFinite(stock) ? stock : 0),
       category: String(category || "").trim(),
       status: String(status || "").trim()
     };
@@ -50,10 +53,18 @@ function parseCsv(content) {
 }
 
 async function run() {
-  const filePath = path.join(__dirname, "..", "..", "Stock for COde.csv");
+  const inputPath = process.argv[2];
+  let filePath = inputPath
+    ? path.resolve(inputPath)
+    : path.join(__dirname, "..", "..", "Final book list and count.csv");
   if (!fs.existsSync(filePath)) {
-    console.error("CSV file not found:", filePath);
-    process.exit(1);
+    const fallback = path.join(__dirname, "..", "..", "Stock for COde.csv");
+    if (!fs.existsSync(fallback)) {
+      console.error("CSV file not found:", filePath);
+      process.exit(1);
+    }
+    console.log("Primary CSV not found, using fallback:", fallback);
+    filePath = fallback;
   }
 
   await connectDb();
@@ -74,6 +85,7 @@ async function run() {
           serialNo: r.serialNo,
           price: r.price,
           stock: r.stock,
+          totalStock: r.totalStock,
           category: r.category,
           status: r.status
         }

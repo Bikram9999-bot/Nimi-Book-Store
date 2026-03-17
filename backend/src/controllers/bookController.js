@@ -28,23 +28,28 @@ async function getBookById(req, res, next) {
 
 async function createBook(req, res, next) {
   try {
-    const { title, price, stock, category, status } = req.body;
+    const { title, price, stock, totalStock, category, status } = req.body;
     if (!title || price === undefined || stock === undefined) {
       return res.status(400).json({ error: "title, price and stock are required" });
     }
     const priceNum = Number(price);
     const stockNum = Number(stock);
+    const totalStockNum = totalStock === undefined ? stockNum : Number(totalStock);
     if (!Number.isFinite(priceNum) || priceNum < 0) {
       return res.status(400).json({ error: "price must be a non-negative number" });
     }
     if (!Number.isFinite(stockNum) || stockNum < 0) {
       return res.status(400).json({ error: "stock must be a non-negative number" });
     }
+    if (!Number.isFinite(totalStockNum) || totalStockNum < 0) {
+      return res.status(400).json({ error: "totalStock must be a non-negative number" });
+    }
 
     const book = await Book.create({
       title: String(title).trim(),
       price: priceNum,
       stock: stockNum,
+      totalStock: totalStockNum,
       category: String(category || "").trim(),
       status: String(status || "").trim()
     });
@@ -65,12 +70,16 @@ async function updateBook(req, res, next) {
     if (req.body.stock !== undefined) update.stock = Number(req.body.stock);
     if (req.body.category !== undefined) update.category = String(req.body.category).trim();
     if (req.body.status !== undefined) update.status = String(req.body.status).trim();
+    if (req.body.totalStock !== undefined) update.totalStock = Number(req.body.totalStock);
 
     if (update.price !== undefined && (!Number.isFinite(update.price) || update.price < 0)) {
       return res.status(400).json({ error: "price must be a non-negative number" });
     }
     if (update.stock !== undefined && (!Number.isFinite(update.stock) || update.stock < 0)) {
       return res.status(400).json({ error: "stock must be a non-negative number" });
+    }
+    if (update.totalStock !== undefined && (!Number.isFinite(update.totalStock) || update.totalStock < 0)) {
+      return res.status(400).json({ error: "totalStock must be a non-negative number" });
     }
 
     const book = await Book.findByIdAndUpdate(id, update, { new: true });

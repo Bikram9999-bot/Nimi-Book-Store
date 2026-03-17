@@ -228,7 +228,10 @@
         const id = String(b._id);
         const existing = existingById.get(id);
         const remaining = Number(b.stock)||0;
-        const prevStock = Math.max(Number(existing?.prevStock)||0, remaining);
+        const apiTotal = Number(b.totalStock);
+        const prevStock = Number.isFinite(apiTotal) && apiTotal > 0
+          ? apiTotal
+          : Math.max(Number(existing?.prevStock)||0, remaining);
         const baseSales = Math.max(0, prevStock - remaining);
         return {
           id,
@@ -399,10 +402,14 @@
       if(!status){el.editStockError.textContent="Stock status is required.";return;}
 
       try{
-        await apiUpdateBook(id,{ stock: qty, price, status });
         const posSales = s.stockSales[id]||0;
-        const totalSales = (row.baseSales||0) + posSales;
-        row.prevStock = qty + totalSales;
+        const maxRemaining = Math.max(0, (row.prevStock||0) - posSales);
+        if(qty > maxRemaining){
+          el.editStockError.textContent=`Remaining cannot exceed ${maxRemaining} for this item.`;
+          return;
+        }
+        await apiUpdateBook(id,{ stock: qty, price, status });
+        row.baseSales = Math.max(0, (row.prevStock||0) - qty - (s.stockSales[id]||0));
         row.baseRemaining = qty;
         row.price=price;
         row.status=status;
