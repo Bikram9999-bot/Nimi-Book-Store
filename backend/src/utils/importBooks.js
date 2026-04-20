@@ -79,9 +79,10 @@ async function run() {
 
   const ops = rows.map((r) => ({
     updateOne: {
-      filter: { title: r.title },
+      filter: r.serialNo > 0 ? { serialNo: r.serialNo } : { title: r.title },
       update: {
         $set: {
+          title: r.title,
           serialNo: r.serialNo,
           price: r.price,
           stock: r.stock,

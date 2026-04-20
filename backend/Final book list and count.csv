@@ -1,118 +1,135 @@
-Sr.No.,Title,Total Stock,Sales,Stock,Unit Price
-1,Engineering Drawing (Group 4) -Hindi - Revised NSQF (1200) (9 Hindi + 1 English),10,0,10,120
-2,Engineering Drawing (Group 7) -Hindi - Revised NSQF (1200),10,0,10,115
-3,Engineering Drawing (Group 9) -Hindi - Revised NSQF (1200),10,0,10,140
-4,Engineering Drawing (Group 13) -Hindi- Revised NSQF (1200),10,0,10,110
-5,Engineering Drawing (Group 17) -Hindi - Revised NSQF (1200),10,0,10,125
-6,Engineering Drawing 1st Year (Group 18) -Hindi - Revised NSQF (1200),15,9,6,130
-7,Engineering Drawing 1st Year (Group 19) -Hindi - Revised NSQF (1200),15,10,5,110
-8,Engineering Drawing 1st Year (Group 20) -Hindi - Revised NSQF (1200),10,2,8,105
-9,Engineering Drawing 1st Year (Group 23) -Hindi - Revised NSQF (1200),10,1,9,85
-10,Engineering Drawing 1st Year (Group 24) -Hindi - Revised NSQF (1200),15,4,11,125
-11,Engineering Drawing 1st Year (Group 25) -Hindi - Revised NSQF (1200),15,5,10,130
-12,Engineering Drawing 1st Year (Group 26) -Hindi - Revised NSQF (1200),10,1,9,90
-13,Employability Skills - Student Workbook - Part 1  -Hindi (Revised NSQF) (1200),30,18,12,270
-14,Employability Skills - Student Workbook - Part 2 -Hindi (Revised NSQF) (1200),30,18,12,245
-15,Workshop Calculation & Science 1st Year (Draughtsman Civil) -Hindi - Revised NSQF (1200),10,1,9,150
-16,Workshop Calculation & Science 1st Year (Draughtsman Mechanical) -Hindi - Revised NSQF (1200),10,1,9,145
-17,Workshop Calculation & Science 1st Year (Electrician) -Hindi - Revised NSQF (1200),15,6,9,150
-18,Workshop Calculation & Science 1st Year (Electronics Mechanic) -Hindi - Revised NSQF (1200),10,1,9,130
-19,Workshop Calculation & Science 1st Year (Fitter) -Hindi - Revised NSQF (1200),15,4,11,155
-20,Workshop Calculation & Science 1st Year (ICTSM) -Hindi - Revised NSQF (1200),10,1,9,120
-21,Workshop Calculation & Science 1st Year (Machinist) -Hindi - Revised NSQF (1200),10,3,7,155
-22,Workshop Calculation & Science (Mechanic Diesel & Mechanic Tractor) -Hindi - Revised NSQF (1200),10,0,10,180
-23,Workshop Calculation & Science (Mechanic Auto Body Painting) -Hindi- Revised NSQF (1200),10,0,10,155
-24,Workshop Calculation & Science 1st Year (MMV) -Hindi - Revised NSQF (1200),10,3,7,160
-25,Workshop Calculation & Science (Plumber) - Hindi - Revised NSQF (1200),10,0,10,135
-26,Workshop Calculation & Science 1st Year (R&ACT) -Hindi - Revised NSQF (1200),10,2,8,145
-27,Workshop Calculation & Science 1st Year (TDM (D&M/PTJ&F) -Hindi - Revised NSQF (1200),10,0,10,160
-28,Workshop Calculation & Science 1st Year (Turner) -Hindi - Revised NSQF (1200),10,1,9,155
-29,Workshop Calculation & Science (Welder) -Hindi - Revised NSQF (1200),10,1,9,160
-30,Workshop Calculation & Science 1st Year (Wireman) -Hindi - Revised NSQF (1200),10,4,6,150
-31,Employability Skills - Student Workbook - 2nd Year -Hindi (Revised NSQF) (1200),30,22,8,190
-32,Workshop Calculation & Science 2nd Year (Draughtsman Civil) -Hindi - Revised NSQF (1200),10,1,9,135
-33,Workshop Calculation & Science 2nd Year (Electrician) -Hindi - Revised NSQF (1200),15,5,10,115
-34,Workshop Calculation & Science 2nd Year (Fitter) -Hindi - Revised NSQF (1200),15,4,11,120
-35,Workshop Calculation & Science 2nd Year (R&ACT) -Hindi - Revised NSQF (1200),10,2,8,125
-36,Workshop Calculation & Science 2nd Year (Turner) -Hindi - Revised NSQF (1200),10,1,9,105
-37,Workshop Calculation & Science 2nd Year (Wireman) -Hindi - Revised NSQF (1200),10,3,7,105
-38,Carpenter Practical - Hindi - Revised NSQF LEVEL 3 (1200),10,1,9,475
-39,Carpenter Theory - Hindi - Revised NSQF LEVEL 3 (1200),10,1,9,380
-40,Cosmetology Practical - Hindi - Revised NSQF LEVEL 3 (1200),20,8,12,265
-41,Cosmetology Theory Hindi - Revised NSQF LEVEL 3 (1200),20,8,12,185
-42,COPA Theory - Hindi - Revised NSQF LEVEL 3 (1200),20,6,14,440
-43,COPA - Practical (Volume II of II) Hindi Revised NSQF LEVEL 3 (1200),20,4,16,360
-44,Draughtsman Civil 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),10,2,8,355
-45,Draughtsman Civil 1st Year Theory - Hindi- Revised NSQF LEVEL 4 (1200),10,2,8,480
-46,Draughtsman Civil 2nd Year Practical - Hindi Revised NSQF LEVEL 4 (1200),10,2,8,385
-47,Draughtsman Civil 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),10,2,8,495
-48,Draughtsman Mechanical 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),15,4,11,440
-49,Draughtsman Mechanical 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),15,2,13,415
-50,Drone Technician Theory Hindi - Revised NSQF LEVEL 3 (1200),10,0,10,160
-51,Dress Making Practical Hindi - Revised NSQF LEVEL 3 (1200),10,1,9,455
-52,Dress Making Theory - Hindi Revised NSQF LEVEL 3 (1200),10,2,8,280
-53,Electrician 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),30,17,13,335
-54,Electrician 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),30,15,15,345
-55,Electrician 1st Year Theory - Hindi Revised NSQF LEVEL 4 (1200),30,16,14,390
-56,Electronics Mechanic (Common for TPES) 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),20,11,9,330
-57,Electronics Mechanic (Common for TPES) 1st Year Theory - Hindi Revised NSQF LEVEL 4 (1200),20,11,9,440
-58,Fashion Design & Technology Practical - Hindi - Revised NSQF LEVEL 3 (1200),10,4,6,405
-59,Fashion Design & Technology Theory Hindi - Revised NSQF LEVEL 3 (1200),10,4,6,300
-60,Fitter 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),20,15,5,440
-61,Fitter 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),20,16,4,450
-62,Fitter 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),20,11,9,305
-63,Foundryman Practical - Hindi - Revised NSQF LEVEL 3 (1200),10,1,9,280
-64,Foundryman Theory Hindi - Revised NSQF LEVEL 3 (1200),10,1,9,330
-65,Health Sanitary Inspector Practical - Hindi - Revised NSQF LEVEL 3 (1200),10,0,10,320
-66,Health Sanitary Inspector Theory Hindi - Revised NSQF LEVEL 3 (1200),10,0,10,250
-67,Instrument Mechanic 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),10,2,8,435
-68,Instrument Mechanic 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),10,2,8,425
-69,Instrument Mechanic 2nd Year Practical Hindi Revised NSQF LEVEL 4 (1200),10,2,8,395
-70,Instrument Mechanic 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),10,2,8,345
-71,ICTSM 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),20,10,10,440
-72,ICTSM 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),20,10,10,410
-73,Machinist 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),10,5,5,300
-74,Machinist 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),10,6,4,360
-75,Machinist 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),10,5,5,420
-76,Machinist 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),10,5,5,400
-77,Mechanic Diesel Theory - Hindi - Revised NSQF LEVEL 3 (1200),10,1,9,380
-78,Mechanic Diesel Practical - Hindi Revised NSQF LEVEL 3 (1200),10,1,9,305
-79,Mechanic Auto Electrical & Electronics Practical - Hindi Revised NSQF LEVEL 3 (1200),10,0,10,280
-80,Mechanic Auto Electrical & Electronics Theory - Hindi Revised NSQF LEVEL 3 (1200),10,0,10,340
-81,Machinist Grinder 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),10,2,8,325
-82,Mechanic Auto Body Painting Practical - Hindi - Revised NSQF LEVEL 3 (1200),10,0,10,245
-83,Mechanic Auto Body Painting Theory Hindi - Revised NSQF LEVEL 3 (1200),10,0,10,270
-84,Mechanic Auto Body Repair Theory - Hindi - Revised NSQF LEVEL 3 (1200),10,0,10,330
-85,MMV 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),20,12,8,280
-86,MMV 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),20,11,9,300
-87,MMV 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),20,11,9,275
-88,MMV 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),20,10,10,305
-89,Mechanic Two & Three Wheeler Practical - Hindi Revised NSQF LEVEL 3 (1200),10,0,10,335
-90,Plumber Theory - Hindi Revised NSQF LEVEL 3 (1200),10,6,4,365
-91,Plumber Practical Hindi - Revised NSQF LEVEL 3 (1200),10,5,5,310
-92,Painter (General) 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),10,3,7,415
-93,Physiotherapy Technician Theory - Hindi - Revised NSQF LEVEL 3 (1200),10,0,10,145
-94,Refrigeration & Air Conditioning Technician 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),20,9,11,325
-95,Refrigeration & Air Conditioning Technician 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),20,11,9,395
-96,Refrigeration & Air Conditioning Technician 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),20,11,9,390
-97,Refrigeration & Air Conditioning Technician 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),20,10,10,355
-98,Solar Technician (Electrical) Practical Hindi - Revised NSQF LEVEL 3 (1200),10,0,10,365
-99,Sheet Metal Worker Practical - Hindi Revised NSQF LEVEL 3 (1200),10,0,10,450
-100,Sheet Metal Worker Theory - Hindi - Revised NSQF LEVEL 3 (1200),10,0,10,390
-101,Surface Ornamentation Techniques (Embroidery) Practical - Hindi - Revised NSQF LEVEL 3 (1200),10,3,7,285
-102,Surface Ornamentation Techniques (Embroidery) Theory - Hindi - Revised NSQF LEVEL 3 (1200),10,3,7,180
-103,Stenographer Secretarial Assistant (Hindi) Practical - Hindi - Revised NSQF LEVEL 3 (1200),10,1,9,270
-104,Stenographer Secretarial Assistant (Hindi) Theory - Hindi Revised NSQF LEVEL 3 (1200),10,1,9,240
-105,Sewing Technology Practical - Hindi - Revised NSQF LEVEL 3 (1200),10,4,6,385
-106,Sewing Technology Theory - Hindi Revised NSQF LEVEL 3 (1200),10,4,6,255
-107,Surveyor 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200),10,1,9,275
-108,TDM(Dies&Moulds) (Common for TDM (PT)&F) 1st Year Practical -Hindi- Revised NSQF LEVEL 4 (1200),10,0,10,415
-109,TDM(Dies&Moulds) (Common for TDM (PT)&F) 1st Year Theory -Hindi- Revised NSQF LEVEL 4 (1200),10,0,10,450
-110,Turner 1st Year Practical - Hindi Revised NSQF LEVEL 4 (1200),10,2,8,275
-111,Turner 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),10,4,6,355
-112,Welder Practical - Hindi Revised NSQF LEVEL 3 (1200),10,10,0,345
-113,Welder Theory Hindi - Revised NSQF LEVEL 3 (1200),10,10,0,290
-114,Wireman 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),10,10,0,455
-115,Wireman 2nd Year Practical Hindi Revised NSQF LEVEL 4 (1200),10,10,0,290
-116,Wireman 2nd Year Theory Hindi - Revised NSQF LEVEL 4 (1200),10,8,2,220
-117,Fitter 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200),20,13,7,340
+"Sr.No.","Title","Total Stock","Sales","Stock","Unit Price"
+"1","Engineering Drawing (Group 4) -Hindi - Revised NSQF (1200) (9 Hindi + 1 English)","10","0","10","120"
+"2","Engineering Drawing (Group 7) -Hindi - Revised NSQF (1200)","10","0","10","115"
+"3","Engineering Drawing (Group 9) -Hindi - Revised NSQF (1200)","10","0","10","140"
+"4","Engineering Drawing (Group 13) -Hindi- Revised NSQF (1200)","10","0","10","110"
+"5","Engineering Drawing (Group 17) -Hindi - Revised NSQF (1200)","10","0","10","125"
+"6","Engineering Drawing 1st Year (Group 18) -Hindi - Revised NSQF (1200)","15","9","6","130"
+"7","Engineering Drawing 1st Year (Group 19) -Hindi - Revised NSQF (1200)","15","10","5","110"
+"8","Engineering Drawing 1st Year (Group 20) -Hindi - Revised NSQF (1200)","10","2","8","105"
+"9","Engineering Drawing 1st Year (Group 23) -Hindi - Revised NSQF (1200)","10","1","9","85"
+"10","Engineering Drawing 1st Year (Group 24) -Hindi - Revised NSQF (1200)","15","4","11","125"
+"11","Engineering Drawing 1st Year (Group 25) -Hindi - Revised NSQF (1200)","15","5","10","130"
+"12","Engineering Drawing 1st Year (Group 26) -Hindi - Revised NSQF (1200)","10","1","9","90"
+"13","Employability Skills - Student Workbook - Part 1  -Hindi (Revised NSQF) (1200)","30","18","12","270"
+"14","Employability Skills - Student Workbook - Part 2 -Hindi (Revised NSQF) (1200)","30","18","12","245"
+"15","Workshop Calculation & Science 1st Year (Draughtsman Civil) -Hindi - Revised NSQF (1200)","10","1","9","150"
+"16","Workshop Calculation & Science 1st Year (Draughtsman Mechanical) -Hindi - Revised NSQF (1200)","10","1","9","145"
+"17","Workshop Calculation & Science 1st Year (Electrician) -Hindi - Revised NSQF (1200)","15","6","9","150"
+"18","Workshop Calculation & Science 1st Year (Electronics Mechanic) -Hindi - Revised NSQF (1200)","10","1","9","130"
+"19","Workshop Calculation & Science 1st Year (Fitter) -Hindi - Revised NSQF (1200)","15","4","11","155"
+"20","Workshop Calculation & Science 1st Year (ICTSM) -Hindi - Revised NSQF (1200)","10","1","9","120"
+"21","Workshop Calculation & Science 1st Year (Machinist) -Hindi - Revised NSQF (1200)","10","3","7","155"
+"22","Workshop Calculation & Science (Mechanic Diesel & Mechanic Tractor) -Hindi - Revised NSQF (1200)","10","0","10","180"
+"23","Workshop Calculation & Science (Mechanic Auto Body Painting) -Hindi- Revised NSQF (1200)","10","0","10","155"
+"24","Workshop Calculation & Science 1st Year (MMV) -Hindi - Revised NSQF (1200)","10","3","7","160"
+"25","Workshop Calculation & Science (Plumber) - Hindi - Revised NSQF (1200)","10","0","10","135"
+"26","Workshop Calculation & Science 1st Year (R&ACT) -Hindi - Revised NSQF (1200)","10","2","8","145"
+"27","Workshop Calculation & Science 1st Year (TDM (D&M/PTJ&F) -Hindi - Revised NSQF (1200)","10","0","10","160"
+"28","Workshop Calculation & Science 1st Year (Turner) -Hindi - Revised NSQF (1200)","10","1","9","155"
+"29","Workshop Calculation & Science (Welder) -Hindi - Revised NSQF (1200)","10","1","9","160"
+"30","Workshop Calculation & Science 1st Year (Wireman) -Hindi - Revised NSQF (1200)","10","4","6","150"
+"31","Employability Skills - Student Workbook - 2nd Year -Hindi (Revised NSQF) (1200)","30","22","8","190"
+"32","Workshop Calculation & Science 2nd Year (Draughtsman Civil) -Hindi - Revised NSQF (1200)","10","1","9","135"
+"33","Workshop Calculation & Science 2nd Year (Electrician) -Hindi - Revised NSQF (1200)","15","5","10","115"
+"34","Workshop Calculation & Science 2nd Year (Fitter) -Hindi - Revised NSQF (1200)","15","4","11","120"
+"35","Workshop Calculation & Science 2nd Year (R&ACT) -Hindi - Revised NSQF (1200)","10","2","8","125"
+"36","Workshop Calculation & Science 2nd Year (Turner) -Hindi - Revised NSQF (1200)","10","1","9","105"
+"37","Workshop Calculation & Science 2nd Year (Wireman) -Hindi - Revised NSQF (1200)","10","3","7","105"
+"38","Carpenter Practical - Hindi - Revised NSQF LEVEL 3 (1200)","10","1","9","475"
+"39","Carpenter Theory - Hindi - Revised NSQF LEVEL 3 (1200)","10","1","9","380"
+"40","Cosmetology Practical - Hindi - Revised NSQF LEVEL 3 (1200)","20","8","12","265"
+"41","Cosmetology Theory Hindi - Revised NSQF LEVEL 3 (1200)","20","8","12","185"
+"42","COPA Theory - Hindi - Revised NSQF LEVEL 3 (1200)","20","6","14","440"
+"43","COPA - Practical (Volume II of II) Hindi Revised NSQF LEVEL 3 (1200)","20","4","16","360"
+"44","Draughtsman Civil 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","10","2","8","355"
+"45","Draughtsman Civil 1st Year Theory - Hindi- Revised NSQF LEVEL 4 (1200)","10","2","8","480"
+"46","Draughtsman Civil 2nd Year Practical - Hindi Revised NSQF LEVEL 4 (1200)","10","2","8","385"
+"47","Draughtsman Civil 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","10","2","8","495"
+"48","Draughtsman Mechanical 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","15","4","11","440"
+"49","Draughtsman Mechanical 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","15","2","13","415"
+"50","Drone Technician Theory Hindi - Revised NSQF LEVEL 3 (1200)","10","0","10","160"
+"51","Dress Making Practical Hindi - Revised NSQF LEVEL 3 (1200)","10","1","9","455"
+"52","Dress Making Theory - Hindi Revised NSQF LEVEL 3 (1200)","10","2","8","280"
+"53","Electrician 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","30","17","13","335"
+"54","Electrician 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","30","15","15","345"
+"55","Electrician 1st Year Theory - Hindi Revised NSQF LEVEL 4 (1200)","30","16","14","390"
+"56","Electronics Mechanic (Common for TPES) 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","20","11","9","330"
+"57","Electronics Mechanic (Common for TPES) 1st Year Theory - Hindi Revised NSQF LEVEL 4 (1200)","20","11","9","440"
+"58","Fashion Design & Technology Practical - Hindi - Revised NSQF LEVEL 3 (1200)","10","4","6","405"
+"59","Fashion Design & Technology Theory Hindi - Revised NSQF LEVEL 3 (1200)","10","4","6","300"
+"60","Fitter 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","20","15","5","440"
+"61","Fitter 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","20","16","4","450"
+"62","Fitter 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","20","11","9","305"
+"63","Foundryman Practical - Hindi - Revised NSQF LEVEL 3 (1200)","10","1","9","280"
+"64","Foundryman Theory Hindi - Revised NSQF LEVEL 3 (1200)","10","1","9","330"
+"65","Health Sanitary Inspector Practical - Hindi - Revised NSQF LEVEL 3 (1200)","10","0","10","320"
+"66","Health Sanitary Inspector Theory Hindi - Revised NSQF LEVEL 3 (1200)","10","0","10","250"
+"67","Instrument Mechanic 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","10","2","8","435"
+"68","Instrument Mechanic 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","10","2","8","425"
+"69","Instrument Mechanic 2nd Year Practical Hindi Revised NSQF LEVEL 4 (1200)","10","2","8","395"
+"70","Instrument Mechanic 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","10","2","8","345"
+"71","ICTSM 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","20","10","10","440"
+"72","ICTSM 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","20","10","10","410"
+"73","Machinist 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","10","5","5","300"
+"74","Machinist 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","10","6","4","360"
+"75","Machinist 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","10","5","5","420"
+"76","Machinist 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","10","5","5","400"
+"77","Mechanic Diesel Theory - Hindi - Revised NSQF LEVEL 3 (1200)","10","1","9","380"
+"78","Mechanic Diesel Practical - Hindi Revised NSQF LEVEL 3 (1200)","10","1","9","305"
+"79","Mechanic Auto Electrical & Electronics Practical - Hindi Revised NSQF LEVEL 3 (1200)","10","0","10","280"
+"80","Mechanic Auto Electrical & Electronics Theory - Hindi Revised NSQF LEVEL 3 (1200)","10","0","10","340"
+"81","Machinist Grinder 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","10","2","8","325"
+"82","Mechanic Auto Body Painting Practical - Hindi - Revised NSQF LEVEL 3 (1200)","10","0","10","245"
+"83","Mechanic Auto Body Painting Theory Hindi - Revised NSQF LEVEL 3 (1200)","10","0","10","270"
+"84","Mechanic Auto Body Repair Theory - Hindi - Revised NSQF LEVEL 3 (1200)","10","0","10","330"
+"85","MMV 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","20","12","8","280"
+"86","MMV 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","20","11","9","300"
+"87","MMV 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","20","11","9","275"
+"88","MMV 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","20","10","10","305"
+"89","Mechanic Two & Three Wheeler Practical - Hindi Revised NSQF LEVEL 3 (1200)","10","0","10","335"
+"90","Plumber Theory - Hindi Revised NSQF LEVEL 3 (1200)","10","6","4","365"
+"91","Plumber Practical Hindi - Revised NSQF LEVEL 3 (1200)","10","5","5","310"
+"92","Painter (General) 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","10","3","7","415"
+"93","Physiotherapy Technician Theory - Hindi - Revised NSQF LEVEL 3 (1200)","10","0","10","145"
+"94","Refrigeration & Air Conditioning Technician 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","20","9","11","325"
+"95","Refrigeration & Air Conditioning Technician 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","20","11","9","395"
+"96","Refrigeration & Air Conditioning Technician 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","20","11","9","390"
+"97","Refrigeration & Air Conditioning Technician 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","20","10","10","355"
+"98","Solar Technician (Electrical) Practical Hindi - Revised NSQF LEVEL 3 (1200)","10","0","10","365"
+"99","Sheet Metal Worker Practical - Hindi Revised NSQF LEVEL 3 (1200)","10","0","10","450"
+"100","Sheet Metal Worker Theory - Hindi - Revised NSQF LEVEL 3 (1200)","10","0","10","390"
+"101","Surface Ornamentation Techniques (Embroidery) Practical - Hindi - Revised NSQF LEVEL 3 (1200)","10","3","7","285"
+"102","Surface Ornamentation Techniques (Embroidery) Theory - Hindi - Revised NSQF LEVEL 3 (1200)","10","3","7","180"
+"103","Stenographer Secretarial Assistant (Hindi) Practical - Hindi - Revised NSQF LEVEL 3 (1200)","10","1","9","270"
+"104","Stenographer Secretarial Assistant (Hindi) Theory - Hindi Revised NSQF LEVEL 3 (1200)","10","1","9","240"
+"105","Sewing Technology Practical - Hindi - Revised NSQF LEVEL 3 (1200)","10","4","6","385"
+"106","Sewing Technology Theory - Hindi Revised NSQF LEVEL 3 (1200)","10","4","6","255"
+"107","Surveyor 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","10","1","9","275"
+"108","TDM(Dies&Moulds) (Common for TDM (PT)&F) 1st Year Practical -Hindi- Revised NSQF LEVEL 4 (1200)","10","0","10","415"
+"109","TDM(Dies&Moulds) (Common for TDM (PT)&F) 1st Year Theory -Hindi- Revised NSQF LEVEL 4 (1200)","10","0","10","450"
+"110","Turner 1st Year Practical - Hindi Revised NSQF LEVEL 4 (1200)","10","2","8","275"
+"111","Turner 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","10","4","6","355"
+"112","Welder Practical - Hindi Revised NSQF LEVEL 3 (1200)","10","10","0","345"
+"113","Welder Theory Hindi - Revised NSQF LEVEL 3 (1200)","10","10","0","290"
+"114","Wireman 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","10","10","0","455"
+"115","Wireman 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","10","0","10","290"
+"116","Wireman 2nd Year Theory Hindi - Revised NSQF LEVEL 4 (1200)","10","8","2","220"
+"117","Fitter 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","20","13","7","340"
+"118","CITS - Dress Making Trade Practical (Vol - I) (Hand Book) - Hindi - NSQF LEVEL 3.5","10","0","10","440"
+"119","CITS - Dress Making Trade Practical (Vol - II) (Hand Book) - Hindi - NSQF LEVEL 3.5","10","0","10","275"
+"120","CITS - Dress Making Trade Theory (Hand Book) - Hindi - NSQF LEVEL 3.5","10","0","10","365"
+"121","CITS - Sewing Technology Trade Practical (Vol - I) (Hand Book) - Hindi - NSQF LEVEL 3.5","10","0","10","435"
+"122","CITS - Sewing Technology Trade Practical (Vol - II) (Hand Book) - Hindi - NSQF LEVEL 3.5","10","0","10","480"
+"123","CITS - Sewing Technology Trade Theory (Hand Book) - Hindi - NSQF LEVEL 3.5","10","0","10","485"
+"124","CITS - Training Methodology - Hindi - Revised NSQF LEVEL 5","20","0","20","405"
+"125","Electrician 1st Year Wall Charts - English","1","0","1","1870"
+"126","Electrician 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","10","0","10","370"
+"127","Mechanic Two & Three Wheeler Theory - Hindi - Revised NSQF LEVEL 3 (1200)","10","0","10","350"
+"128","MMV 1st Year Wall Charts - English","1","0","1","1870"
+"129","Surveyor 1st Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","10","0","10","330"
+"130","Surveyor 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","10","0","10","215"
+"131","Turner 2nd Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","10","0","10","245"
+"132","Turner 2nd Year Theory - Hindi - Revised NSQF LEVEL 4 (1200)","10","0","10","320"
+"133","Welder Wall Chart (English)","1","0","1","1870"
+"134","Wireman 1st Year Practical - Hindi - Revised NSQF LEVEL 4 (1200)","10","0","10","415"
