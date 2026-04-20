@@ -25,7 +25,12 @@
     .pri{background:var(--b);color:#fff}.soft{background:#dbe8ff;color:#0f479e}.danger{background:#ffe4e4;color:#971c1c}
     .r{display:grid;grid-template-columns:1fr auto;gap:10px;position:relative}
     .dd{position:absolute;left:0;right:0;top:100%;margin-top:6px;background:#fff;border:1px solid var(--l);border-radius:9px;display:none;max-height:270px;overflow:auto;z-index:9}
-    .dd div{padding:9px 11px;border-bottom:1px solid #edf2fb;display:flex;justify-content:space-between;cursor:pointer}.dd div:hover{background:#f4f8ff}
+    .dd div{padding:9px 11px;border-bottom:1px solid #edf2fb;display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer}.dd div:hover{background:#f4f8ff}
+    .dd-main{flex:1;min-width:0}
+    .dd-main span{display:block}
+    .dd-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .dd-actions button{padding:4px 9px;border-radius:7px;background:#edf4ff;color:#0f479e}
+    .dd-actions b{min-width:72px;text-align:right}
     table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px 8px;border-bottom:1px solid #edf2fb;text-align:left}th{font-size:12px;color:var(--m);background:#f7faff}
     .sum{margin-top:10px;border:1px solid var(--l);border-radius:10px;padding:10px;background:#f8fbff}.sum div{display:flex;justify-content:space-between;margin:6px 0}.sum .t{font-size:18px;font-weight:800;border-top:1px solid #d4e1f3;padding-top:8px;margin-top:8px}
     .act{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
@@ -222,11 +227,34 @@
       if(q.length<2){el.dd.style.display="none";return;}
       const m=s.books.filter(b=>b.title.toLowerCase().includes(q)).slice(0,10);
       el.dd.innerHTML="";if(!m.length){el.dd.style.display="none";return;}
-      m.forEach(b=>{const d=document.createElement("div");d.innerHTML=`<span>${b.title}</span><b>${fmt(b.price)}</b>`;d.onclick=()=>{s.sel=b;el.q.value=b.title;el.add.disabled=false;el.sel.textContent=`Selected: #${b.id} | ${fmt(b.price)}`;el.dd.style.display="none"};el.dd.appendChild(d)});
+      m.forEach(b=>{
+        const qty=(s.cart.find(i=>i.id===b.id)||{}).qty||0;
+        const d=document.createElement("div");
+        d.innerHTML=`<div class="dd-main"><span>${b.title}</span></div><div class="dd-actions"><button type="button" data-minus="${b.id}">-</button><span class="muted">${qty}</span><button type="button" data-plus="${b.id}">+</button><b>${fmt(b.price)}</b></div>`;
+        d.onclick=e=>{
+          if(e.target.closest("[data-plus]")||e.target.closest("[data-minus]"))return;
+          s.sel=b;el.q.value=b.title;el.add.disabled=false;el.sel.textContent=`Selected: #${b.id} | ${fmt(b.price)}`;
+        };
+        el.dd.appendChild(d)
+      });
       el.dd.style.display="block";
     }
 
     function addToCart(){if(!s.sel)return;const e=s.cart.find(i=>i.id===s.sel.id);if(e)e.qty+=1;else s.cart.push({...s.sel,qty:1});s.sel=null;el.q.value="";el.add.disabled=true;el.sel.textContent="";drawCart();}
+
+    function changeCartQty(book,delta){
+      const item=s.cart.find(i=>i.id===book.id);
+      if(delta>0){
+        if(item)item.qty+=delta;
+        else s.cart.push({...book,qty:delta});
+      }else if(item){
+        item.qty=Math.max(0,item.qty+delta);
+        if(item.qty===0)s.cart=s.cart.filter(i=>i.id!==book.id);
+      }
+      drawCart();
+      drawSearch();
+    }
+
     function drawCart(){
       if(!s.cart.length)el.cart.innerHTML='<tr><td colspan="5" class="muted">Cart is empty.</td></tr>';
       else{el.cart.innerHTML="";s.cart.forEach(i=>{const tr=document.createElement("tr");tr.innerHTML=`<td>${i.title}</td><td>${fmt(i.price)}</td><td><input class="qty" type="number" min="1" value="${i.qty}" data-q="${i.id}"></td><td>${fmt(i.price*i.qty)}</td><td><button class="danger" data-r="${i.id}">X</button></td>`;el.cart.appendChild(tr)})}
@@ -474,6 +502,21 @@
 
       drawCart();drawHistory();drawStock();
       el.q.oninput=drawSearch;el.add.onclick=addToCart;document.addEventListener("click",e=>{if(!el.dd.contains(e.target)&&e.target!==el.q)el.dd.style.display="none"});
+      el.dd.onclick=e=>{
+        const plusId=Number(e.target.getAttribute("data-plus"));
+        if(plusId){
+          const book=s.books.find(b=>b.id===plusId);
+          if(book)changeCartQty(book,1);
+          e.stopPropagation();
+          return;
+        }
+        const minusId=Number(e.target.getAttribute("data-minus"));
+        if(minusId){
+          const book=s.books.find(b=>b.id===minusId);
+          if(book)changeCartQty(book,-1);
+          e.stopPropagation();
+        }
+      };
       el.cart.oninput=e=>{const id=Number(e.target.getAttribute("data-q"));if(id){const it=s.cart.find(x=>x.id===id);if(it){it.qty=Math.max(1,Number(e.target.value)||1);drawCart();}}};
       el.cart.onclick=e=>{const id=Number(e.target.getAttribute("data-r"));if(id){s.cart=s.cart.filter(x=>x.id!==id);drawCart();}};
       el.clear.onclick=()=>{s.cart=[];drawCart();};el.pdf.onclick=checkout;
