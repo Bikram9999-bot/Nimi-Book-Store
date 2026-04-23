@@ -1,6 +1,6 @@
-# Bookstore POS (Front-End Only)
+# NIMI Lucknow (Front-End Only)
 
-This is a single‑page Bookstore POS app with:
+This is a single‑page NIMI Lucknow app with:
 - Login gate (password only)
 - Catalog + cart + receipt
 - Automatic stock sync
@@ -27,7 +27,7 @@ git init
 3. Add files and commit:
 ```bash
 git add .
-git commit -m "Initial Bookstore POS"
+git commit -m "Initial NIMI Lucknow"
 ```
 
 4. Create a GitHub repo (on github.com) and copy its URL.

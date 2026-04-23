@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Bookstore POS</title>
+  <title>NIMI Lucknow</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -68,7 +68,7 @@
 <body>
   <section id="loginScreen" class="login-wrap" style="display:none;">
     <div class="login-card">
-      <h1>Bookstore POS Login</h1>
+      <h1>NIMI Lucknow Login</h1>
       <div class="muted">Enter the password to access the dashboard.</div>
       <label for="loginPassword">Password</label>
       <input id="loginPassword" type="password" placeholder="Password">
@@ -82,7 +82,7 @@
   <main id="appRoot" class="wrap" style="display:none;">
     <section class="panel">
       <div class="h">
-        <h2>Bookstore POS</h2>
+        <h2>NIMI Lucknow</h2>
         <div class="head-right">
           <button id="stockBtn" class="soft">Stock Data</button>
           <button id="logoutBtn" class="soft">Logout</button>
@@ -650,7 +650,7 @@
 
     function pdf(tx,t){
       const {jsPDF}=window.jspdf,doc=new jsPDF();let y=14;
-      doc.setFillColor(15,91,207);doc.rect(0,0,210,28,"F");doc.setTextColor(255,255,255);doc.setFontSize(18);doc.text("Bookstore POS Receipt",14,16);doc.setFontSize(10);doc.text(tx.no,14,23);doc.text(tx.date,150,23,{align:"right"});
+      doc.setFillColor(15,91,207);doc.rect(0,0,210,28,"F");doc.setTextColor(255,255,255);doc.setFontSize(18);doc.text("NIMI Lucknow Receipt",14,16);doc.setFontSize(10);doc.text(tx.no,14,23);doc.text(tx.date,150,23,{align:"right"});
       y=36;doc.setTextColor(20,30,45);doc.setFontSize(11);doc.text(`Customer: ${s.c.name}`,14,y);y+=6;doc.text(`Phone: ${s.c.phone}`,14,y);y+=6;doc.text(`Email: ${s.c.email}`,14,y);y+=6;doc.text(`Address: ${s.c.address}, ${s.c.pincode}`,14,y);y+=10;
       doc.setFillColor(230,239,255);doc.rect(14,y-5,182,8,"F");doc.setFontSize(10);doc.text("Book",16,y);doc.text("Price",132,y);doc.text("Qty",154,y);doc.text("Amount",176,y,{align:"right"});y+=6;
       tx.lines.forEach(i=>{if(y>276){doc.addPage();y=20;}doc.text(i.title.length>70?`${i.title.slice(0,67)}...`:i.title,16,y);doc.text(fmt(i.price),132,y);doc.text(String(i.qty),154,y);doc.text(fmt(i.amount),176,y,{align:"right"});y+=6;});
