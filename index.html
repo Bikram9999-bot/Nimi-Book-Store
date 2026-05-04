@@ -273,7 +273,7 @@
     const LOGIN_KEY="bookstore_pos_logged_in";
     const API_BASE="https://nimi-book-store-mt9k.vercel.app";
     const OWNER_EMAIL="ss190775@gmail.com";
-    const KEYS={TX:"bookstore_pos_tx_v4",C:"bookstore_pos_customer_v4",SB:"bookstore_pos_stock_base_v1",SS:"bookstore_pos_stock_sales_v3"};
+    const KEYS={TX:"bookstore_pos_tx_v4",C:"bookstore_pos_customer_v4",SB:"bookstore_pos_stock_base_v1",SS:"bookstore_pos_stock_sales_v3",TXM:"bookstore_pos_tx_backend_migrated_v1"};
     const EMAILJS_CONFIG={enabled:false,publicKey:"",serviceId:"",templateId:"",vars:{to:"to_email",cc:"cc_email",subject:"subject",body:"text_body",customer:"customer_name",receipt:"receipt_no"}};
 
     const s={books:[],cart:[],sel:null,tx:[],selectedTxNo:"",c:{name:"",phone:"",email:"",address:"",pincode:""},stockRows:[],stockSales:{},editingStockId:null,appInitialized:false};
@@ -334,6 +334,35 @@
       return data.book;
     }
 
+    async function apiGetSales(){
+      const res = await fetch(`${API_BASE}/api/sales?limit=200`);
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || "Failed to load sales from backend");
+      return data.sales || [];
+    }
+
+    async function apiImportSales(sales){
+      const res = await fetch(`${API_BASE}/api/sales/import`,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ sales })
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || "Failed to import old sales");
+      return data;
+    }
+
+    async function apiCompleteSale(payload){
+      const res = await fetch(`${API_BASE}/api/sales/complete`,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || "Failed to save sale");
+      return data.sale;
+    }
+
     function applyBooksFromApi(books){
       const existingById = new Map(s.stockRows.map(r=>[String(r.id), r]));
       const seedByTitle = new Map((window.POS_SEED && Array.isArray(window.POS_SEED.stock) ? window.POS_SEED.stock : []).map(r=>[String(r.title||"").toLowerCase(), r]));
@@ -369,6 +398,79 @@
       const books = await apiGetBooks();
       applyBooksFromApi(books);
       drawStock();
+    }
+
+    function normalizeBackendSale(sale){
+      const dateValue = sale.saleDate ? new Date(sale.saleDate) : new Date();
+      const lines = Array.isArray(sale.lines) ? sale.lines.map(line=>({
+        id:String(line.bookId || line.id || ""),
+        title:String(line.title || ""),
+        price:Number(line.price)||0,
+        qty:Number(line.qty)||0,
+        amount:Number(line.amount)||0
+      })) : [];
+      return {
+        no: String(sale.receiptNo || sale.no || ""),
+        date: dateValue.toLocaleString("en-IN"),
+        saleDateIso: dateValue.toISOString(),
+        customer: {
+          name: String(sale.customer?.name || ""),
+          phone: String(sale.customer?.phone || ""),
+          email: String(sale.customer?.email || ""),
+          address: String(sale.customer?.address || ""),
+          pincode: String(sale.customer?.pincode || "")
+        },
+        items: Number(sale.itemCount ?? sale.items) || lines.reduce((sum,line)=>sum+line.qty,0),
+        lines,
+        dp: Number(sale.discountPercent ?? sale.dp) || 0,
+        sub: Number(sale.subtotal ?? sale.sub) || 0,
+        disc: Number(sale.discountAmount ?? sale.disc) || 0,
+        total: Number(sale.total) || 0
+      };
+    }
+
+    async function syncSalesFromBackend(){
+      const sales = await apiGetSales();
+      s.tx = sales.map(normalizeBackendSale);
+      if(!s.tx.some(tx=>tx.no===s.selectedTxNo)) s.selectedTxNo = s.tx[0]?.no || "";
+      saveTx();
+      drawHistory();
+    }
+
+    async function migrateLegacySalesToBackend(){
+      if(localStorage.getItem(KEYS.TXM)==="1") return;
+      const localTx = JSON.parse(localStorage.getItem(KEYS.TX) || "[]");
+      if(!Array.isArray(localTx) || !localTx.length){
+        localStorage.setItem(KEYS.TXM,"1");
+        return;
+      }
+      const backendSales = await apiGetSales();
+      const backendNos = new Set(backendSales.map(sale=>String(sale.receiptNo || sale.no || "")));
+      const missingSales = localTx
+        .filter(tx=>tx && tx.no && !backendNos.has(String(tx.no)))
+        .map(tx=>({
+          receiptNo: tx.no,
+          saleDate: tx.saleDateIso || tx.date,
+          customer: tx.customer || {},
+          itemCount: Number(tx.items) || (Array.isArray(tx.lines) ? tx.lines.reduce((sum,line)=>sum + (Number(line.qty)||0),0) : 0),
+          discountPercent: Number(tx.dp) || 0,
+          subtotal: Number(tx.sub) || 0,
+          discountAmount: Number(tx.disc) || 0,
+          total: Number(tx.total) || 0,
+          lines: Array.isArray(tx.lines) ? tx.lines.map(line=>({
+            bookId: String(line.id || line.bookId || ""),
+            title: String(line.title || ""),
+            price: Number(line.price)||0,
+            qty: Number(line.qty)||0,
+            amount: Number(line.amount)||0
+          })) : [],
+          source: "import"
+        }));
+
+      if(missingSales.length){
+        await apiImportSales(missingSales);
+      }
+      localStorage.setItem(KEYS.TXM,"1");
     }
 
     function loadSeedData(){
@@ -528,11 +630,17 @@
       }
     }
 
-    function addTx(t){
+    function makeTx(t){
       const n=new Date(),no=`REC-${n.getFullYear()}${String(n.getMonth()+1).padStart(2,"0")}${String(n.getDate()).padStart(2,"0")}-${String(n.getHours()).padStart(2,"0")}${String(n.getMinutes()).padStart(2,"0")}${String(n.getSeconds()).padStart(2,"0")}`;
       const lines=s.cart.map(i=>({id:i.id,title:i.title,price:i.price,qty:i.qty,amount:i.price*i.qty}));
-      const tx={no,date:n.toLocaleString("en-IN"),customer:{...s.c},items:lines.reduce((a,b)=>a+b.qty,0),lines,dp:Math.round(t.r*100),sub:t.sub,disc:t.d,total:t.t};
-      s.tx.unshift(tx); s.tx=s.tx.slice(0,50); s.selectedTxNo=tx.no; saveTx(); drawHistory(); return tx;
+      return {no,date:n.toLocaleString("en-IN"),saleDateIso:n.toISOString(),customer:{...s.c},items:lines.reduce((a,b)=>a+b.qty,0),lines,dp:Math.round(t.r*100),sub:t.sub,disc:t.d,total:t.t};
+    }
+
+    function cacheTx(tx){
+      s.tx = [tx, ...s.tx.filter(existing=>existing.no!==tx.no)].slice(0,200);
+      s.selectedTxNo=tx.no;
+      saveTx();
+      drawHistory();
     }
 
     function applySaleToStock(lines){ lines.forEach(l=>{ s.stockSales[l.id]=(s.stockSales[l.id]||0)+l.qty; }); persistStockSales(); drawStock(); }
@@ -581,12 +689,30 @@
       }
       const stockIssues=validateStock(s.cart);
       if(stockIssues.length){alert(`Insufficient Stock:\n${stockIssues.join("\n")}`);return;}
-      const t=totals(),tx=addTx(t);
+      const t=totals(),tx=makeTx(t);
       try{
-        for(const line of tx.lines){ await apiUpdateStock(line.id, line.qty); }
+        const savedSale = await apiCompleteSale({
+          receiptNo: tx.no,
+          saleDate: tx.saleDateIso,
+          customer: tx.customer,
+          itemCount: tx.items,
+          discountPercent: tx.dp,
+          subtotal: tx.sub,
+          discountAmount: tx.disc,
+          total: tx.total,
+          lines: tx.lines.map(line=>({
+            bookId: line.id,
+            title: line.title,
+            price: line.price,
+            qty: line.qty,
+            amount: line.amount
+          })),
+          source: "pos"
+        });
+        cacheTx(normalizeBackendSale(savedSale));
         await refreshBooksFromApi();
       }catch(err){
-        alert(`Stock update failed: ${err.message}`);
+        alert(`Purchase save failed: ${err.message}`);
         return;
       }
       pdf(tx,t);
@@ -647,7 +773,13 @@
       el.closeStockEditBtn.onclick=closeStockEdit; el.cancelStockEditBtn.onclick=closeStockEdit; el.saveStockEditBtn.onclick=saveStockEdit;
       el.stockEditModal.onclick=e=>{ if(e.target===el.stockEditModal)closeStockEdit(); };
 
-      tryLoadDefault();
+      (async ()=>{
+        await tryLoadDefault();
+        try{
+          await migrateLegacySalesToBackend();
+          await syncSalesFromBackend();
+        }catch(_){}
+      })();
     }
 
     function init(){
