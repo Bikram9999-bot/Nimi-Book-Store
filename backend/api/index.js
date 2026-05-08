@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { connectDb } = require("../src/db");
 const bookRoutes = require("../src/routes/bookRoutes");
+const saleRoutes = require("../src/routes/saleRoutes");
 
 const app = express();
 
@@ -26,6 +27,11 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/books", bookRoutes);
+app.use("/api/sales", saleRoutes);
+
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
 
 app.use((err, req, res, next) => {
   console.error(err);
