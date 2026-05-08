@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Book = require("../models/Book");
 const Sale = require("../models/Sale");
+const { writeAuditLog } = require("../utils/auditLogger");
 
 function parseNumber(value, fallback = 0) {
   const num = Number(value);
@@ -217,6 +218,7 @@ async function completeSale(req, res, next) {
     let savedSale = null;
     await session.withTransaction(async () => {
       for (const line of sale.lines) {
+        const beforeBook = await Book.findById(line.bookId).session(session);
         const updatedBook = await Book.findOneAndUpdate(
           { _id: line.bookId, stock: { $gte: line.qty } },
           { $inc: { stock: -line.qty } },
@@ -232,6 +234,19 @@ async function completeSale(req, res, next) {
           stockError.statusCode = 400;
           throw stockError;
         }
+        await writeAuditLog({
+          eventType: "inventory_sale_adjustment",
+          source: sale.source || "pos",
+          reference: sale.receiptNo,
+          message: `Sale completed for ${line.qty} unit(s).`,
+          before: beforeBook,
+          after: updatedBook,
+          meta: {
+            receiptNo: sale.receiptNo,
+            quantity: line.qty
+          },
+          session
+        });
       }
 
       const created = await Sale.create(

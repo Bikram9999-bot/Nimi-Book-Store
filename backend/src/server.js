@@ -5,6 +5,7 @@ const cors = require("cors");
 const { connectDb } = require("./db");
 const bookRoutes = require("./routes/bookRoutes");
 const saleRoutes = require("./routes/saleRoutes");
+const auditRoutes = require("./routes/auditRoutes");
 
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
@@ -27,6 +28,7 @@ app.get("/health", (req, res) => {
 
 app.use("/api/books", bookRoutes);
 app.use("/api/sales", saleRoutes);
+app.use("/api/audit", auditRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

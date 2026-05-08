@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Book = require("../models/Book");
+const { writeAuditLog } = require("../utils/auditLogger");
 
 function isValidId(id) {
   return mongoose.Types.ObjectId.isValid(id);
@@ -53,6 +54,12 @@ async function createBook(req, res, next) {
       category: String(category || "").trim(),
       status: String(status || "").trim()
     });
+    await writeAuditLog({
+      eventType: "book_created",
+      source: "api",
+      message: "Book record created.",
+      after: book
+    });
     return res.status(201).json({ book });
   } catch (err) {
     return next(err);
@@ -63,7 +70,14 @@ async function updateBook(req, res, next) {
   try {
     const { id } = req.params;
     if (!isValidId(id)) return res.status(400).json({ error: "invalid id" });
+    if (req.body.totalStock !== undefined && req.body.forceTotalStockUpdate !== true) {
+      return res.status(400).json({
+        error: "Previous Stock is audit-protected and cannot be changed from this endpoint."
+      });
+    }
 
+    const existing = await Book.findById(id);
+    if (!existing) return res.status(404).json({ error: "book not found" });
     const update = {};
     if (req.body.title !== undefined) update.title = String(req.body.title).trim();
     if (req.body.price !== undefined) update.price = Number(req.body.price);
@@ -81,9 +95,22 @@ async function updateBook(req, res, next) {
     if (update.totalStock !== undefined && (!Number.isFinite(update.totalStock) || update.totalStock < 0)) {
       return res.status(400).json({ error: "totalStock must be a non-negative number" });
     }
+    if (update.stock !== undefined && update.stock > Number(existing.totalStock)) {
+      return res.status(400).json({ error: "stock cannot exceed Previous Stock" });
+    }
 
     const book = await Book.findByIdAndUpdate(id, update, { new: true });
-    if (!book) return res.status(404).json({ error: "book not found" });
+    await writeAuditLog({
+      eventType: "inventory_manual_update",
+      source: String(req.body.source || "manual-ui").trim(),
+      reference: String(req.body.reference || "").trim(),
+      message: String(req.body.reason || "Manual inventory update.").trim(),
+      before: existing,
+      after: book,
+      meta: {
+        changedFields: Object.keys(update)
+      }
+    });
     return res.status(200).json({ book });
   } catch (err) {
     return next(err);
@@ -96,6 +123,12 @@ async function deleteBook(req, res, next) {
     if (!isValidId(id)) return res.status(400).json({ error: "invalid id" });
     const book = await Book.findByIdAndDelete(id);
     if (!book) return res.status(404).json({ error: "book not found" });
+    await writeAuditLog({
+      eventType: "book_deleted",
+      source: "api",
+      message: "Book record deleted.",
+      before: book
+    });
     return res.status(200).json({ message: "book removed" });
   } catch (err) {
     return next(err);
@@ -111,6 +144,8 @@ async function updateStock(req, res, next) {
     if (!Number.isFinite(qty) || qty <= 0) {
       return res.status(400).json({ error: "quantity must be a positive number" });
     }
+    const beforeBook = await Book.findById(id);
+    if (!beforeBook) return res.status(404).json({ error: "book not found" });
 
     const book = await Book.findOneAndUpdate(
       { _id: id, stock: { $gte: qty } },
@@ -123,6 +158,15 @@ async function updateStock(req, res, next) {
       if (!exists) return res.status(404).json({ error: "book not found" });
       return res.status(400).json({ error: "insufficient stock" });
     }
+    await writeAuditLog({
+      eventType: "inventory_sale_adjustment",
+      source: String(req.body.source || "stock-endpoint").trim(),
+      reference: String(req.body.reference || "").trim(),
+      message: `Stock reduced by ${qty}.`,
+      before: beforeBook,
+      after: book,
+      meta: { quantity: qty }
+    });
 
     return res.status(200).json({ book });
   } catch (err) {

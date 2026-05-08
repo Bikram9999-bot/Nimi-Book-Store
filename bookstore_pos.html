@@ -69,6 +69,10 @@
         </div>
       </div>
       <div class="flex items-center gap-3">
+        <button id="auditBtn" class="bg-white border border-slate-300 text-slate-700 font-semibold py-2.5 px-5 rounded-lg shadow-sm hover:bg-slate-50 focus:ring-2 focus:ring-slate-200 focus:ring-offset-2 transition-all text-sm py-2 px-4 flex items-center gap-2">
+          <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6m3 6V7m3 10v-4m5 8H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v14a2 2 0 01-2 2z"></path></svg>
+          Inspection
+        </button>
         <button id="stockBtn" class="bg-white border border-slate-300 text-slate-700 font-semibold py-2.5 px-5 rounded-lg shadow-sm hover:bg-slate-50 focus:ring-2 focus:ring-slate-200 focus:ring-offset-2 transition-all text-sm py-2 px-4 flex items-center gap-2">
           <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
           Inventory
@@ -203,6 +207,10 @@
         </button>
       </div>
       <div class="p-6 flex-1 flex flex-col overflow-hidden">
+        <div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+          <div class="font-bold uppercase tracking-wide">Audit Priority</div>
+          <div class="mt-1">Previous Stock is treated as the protected audit number. Sales reduce only On-Hand stock. Previous Stock cannot be changed from the normal POS screen.</div>
+        </div>
         <div class="flex items-center gap-4 mb-4">
           <div class="relative flex-1 max-w-md">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -257,10 +265,48 @@
           <label for="editStockStatus" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Override Status Label</label>
           <input id="editStockStatus" placeholder="e.g. In Stock / Restocking" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-shadow bg-white">
         </div>
+        <div>
+          <label for="editStockReason" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Audit Reason</label>
+          <textarea id="editStockReason" rows="2" placeholder="Reason for this manual correction" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-shadow bg-white resize-none"></textarea>
+        </div>
         <div id="editStockError" class="text-xs text-red-500 font-semibold h-4"></div>
         <div class="pt-2 flex gap-3">
           <button id="cancelStockEditBtn" class="bg-white border border-slate-300 text-slate-700 font-semibold py-2.5 px-5 rounded-lg shadow-sm hover:bg-slate-50 focus:ring-2 focus:ring-slate-200 focus:ring-offset-2 transition-all flex-1 py-2 text-sm">Cancel</button>
           <button id="saveStockEditBtn" class="bg-brand-600 text-white font-semibold py-2.5 px-5 rounded-lg shadow-sm hover:bg-brand-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-1 py-2 text-sm">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="auditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[55]">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Inspection & Audit Unit</h2>
+          <div id="auditCheckedAt" class="text-xs text-slate-500 mt-1">Checking system...</div>
+        </div>
+        <button id="closeAuditBtn" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto space-y-6">
+        <div id="auditBanner" class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">Running inspection...</div>
+        <div id="auditSummary" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">No data yet.</div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-wide text-slate-700 mb-3">Integrity Checks</h3>
+            <div id="auditChecks" class="space-y-3">
+              <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">Waiting for report...</div>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold uppercase tracking-wide text-slate-700 mb-3">Recent Inventory Audit Log</h3>
+            <div id="auditLogs" class="space-y-3">
+              <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">Waiting for log data...</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -276,18 +322,19 @@
     const KEYS={TX:"bookstore_pos_tx_v4",C:"bookstore_pos_customer_v4",SB:"bookstore_pos_stock_base_v1",SS:"bookstore_pos_stock_sales_v3",TXM:"bookstore_pos_tx_backend_migrated_v1"};
     const EMAILJS_CONFIG={enabled:false,publicKey:"",serviceId:"",templateId:"",vars:{to:"to_email",cc:"cc_email",subject:"subject",body:"text_body",customer:"customer_name",receipt:"receipt_no"}};
 
-    const s={books:[],cart:[],sel:null,tx:[],selectedTxNo:"",c:{name:"",phone:"",email:"",address:"",pincode:""},stockRows:[],stockSales:{},editingStockId:null,appInitialized:false};
+    const s={books:[],cart:[],sel:null,tx:[],selectedTxNo:"",c:{name:"",phone:"",email:"",address:"",pincode:""},stockRows:[],stockSales:{},editingStockId:null,auditReport:null,auditLogs:[],appInitialized:false};
     const $=id=>document.getElementById(id), fmt=v=>`Rs ${Number(v).toFixed(2)}`;
     const el={
       loginScreen:$("loginScreen"),loginPassword:$("loginPassword"),loginBtn:$("loginBtn"),loginError:$("loginError"),appRoot:$("appRoot"),logoutBtn:$("logoutBtn"),
       status:$("status"),bookCount:$("bookCount"),q:$("q"),dd:$("dd"),add:$("add"),sel:$("sel"),
       cart:$("cart"),sub:$("sub"),tier:$("tier"),disc:$("disc"),tot:$("tot"),clear:$("clear"),pdf:$("pdf"),
       history:$("history"),txDetail:$("txDetail"),cn:$("cn"),cp:$("cp"),ce:$("ce"),ca:$("ca"),cz:$("cz"),cerr:$("cerr"),
+      auditBtn:$("auditBtn"),auditModal:$("auditModal"),closeAuditBtn:$("closeAuditBtn"),auditCheckedAt:$("auditCheckedAt"),auditBanner:$("auditBanner"),auditSummary:$("auditSummary"),auditChecks:$("auditChecks"),auditLogs:$("auditLogs"),
       stockBtn:$("stockBtn"),stockModal:$("stockModal"),closeStockBtn:$("closeStockBtn"),
       stockSearch:$("stockSearch"),stockBody:$("stockBody"),stockSummary:$("stockSummary"),
       stockEditModal:$("stockEditModal"),closeStockEditBtn:$("closeStockEditBtn"),
       editStockTitle:$("editStockTitle"),editStockQty:$("editStockQty"),editStockPrice:$("editStockPrice"),
-      editStockStatus:$("editStockStatus"),editStockError:$("editStockError"),
+      editStockStatus:$("editStockStatus"),editStockReason:$("editStockReason"),editStockError:$("editStockError"),
       saveStockEditBtn:$("saveStockEditBtn"),cancelStockEditBtn:$("cancelStockEditBtn")
     };
 
@@ -363,6 +410,27 @@
       return data.sale;
     }
 
+    async function apiGetAuditReport(){
+      const res = await fetch(`${API_BASE}/api/audit/report`);
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || "Failed to load audit report");
+      return data;
+    }
+
+    async function apiGetAuditLogs(){
+      const res = await fetch(`${API_BASE}/api/audit/logs?limit=50`);
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || "Failed to load audit logs");
+      return data.logs || [];
+    }
+
+    function formatDateTime(value){
+      if(!value) return "-";
+      const date = new Date(value);
+      if(Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleString("en-IN");
+    }
+
     function applyBooksFromApi(books){
       const existingById = new Map(s.stockRows.map(r=>[String(r.id), r]));
       const seedByTitle = new Map((window.POS_SEED && Array.isArray(window.POS_SEED.stock) ? window.POS_SEED.stock : []).map(r=>[String(r.title||"").toLowerCase(), r]));
@@ -435,6 +503,83 @@
       if(!s.tx.some(tx=>tx.no===s.selectedTxNo)) s.selectedTxNo = s.tx[0]?.no || "";
       saveTx();
       drawHistory();
+    }
+
+    function renderAuditSummary(report){
+      if(!report || !report.summary){
+        el.auditSummary.innerHTML = '<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">No audit summary available.</div>';
+        return;
+      }
+      const cards = [
+        ["Books", report.summary.totalBooks],
+        ["Protected Rows", report.summary.protectedInventory],
+        ["Prev Stock Units", report.summary.totalStockUnits],
+        ["Current Units", report.summary.currentUnits],
+        ["Low Stock", report.summary.lowStockCount],
+        ["Out of Stock", report.summary.outOfStockCount]
+      ];
+      el.auditSummary.innerHTML = cards.map(([label, value])=>`
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div class="text-[11px] font-bold uppercase tracking-wide text-slate-400">${label}</div>
+          <div class="mt-2 text-2xl font-black text-slate-900">${value}</div>
+        </div>`).join("");
+    }
+
+    function renderAuditChecks(report){
+      const checks = Array.isArray(report?.checks) ? report.checks : [];
+      if(!checks.length){
+        el.auditChecks.innerHTML = '<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">No integrity checks available.</div>';
+        return;
+      }
+      el.auditChecks.innerHTML = checks.map(check=>{
+        const palette = check.status==="pass"
+          ? ["border-green-200 bg-green-50","text-green-700","PASS"]
+          : ["border-red-200 bg-red-50","text-red-700","FAIL"];
+        return `
+          <div class="rounded-xl border ${palette[0]} p-4">
+            <div class="flex items-center justify-between gap-3">
+              <div class="text-sm font-bold text-slate-900">${check.code.replaceAll("_"," ")}</div>
+              <span class="text-[11px] font-black uppercase tracking-wide ${palette[1]}">${palette[2]}</span>
+            </div>
+            <div class="mt-2 text-sm text-slate-700">${check.message}</div>
+          </div>`;
+      }).join("");
+    }
+
+    function renderAuditLogs(logs){
+      if(!Array.isArray(logs) || !logs.length){
+        el.auditLogs.innerHTML = '<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">No audit entries yet.</div>';
+        return;
+      }
+      el.auditLogs.innerHTML = logs.map(log=>`
+        <div class="rounded-xl border border-slate-200 bg-white p-4">
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-sm font-bold text-slate-900">${log.title || "Inventory Event"}</div>
+            <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">${String(log.eventType || "").replaceAll("_"," ")}</div>
+          </div>
+          <div class="mt-1 text-xs text-slate-500">SL No: ${log.serialNo || "-"} | ${formatDateTime(log.createdAt)}</div>
+          <div class="mt-2 text-sm text-slate-700">${log.message || "Inventory change recorded."}</div>
+          <div class="mt-2 text-xs text-slate-500">Before: ${log.before?.stock ?? 0} | After: ${log.after?.stock ?? 0} | Delta: ${log.deltaStock ?? 0}</div>
+          <div class="mt-1 text-xs text-slate-400">Source: ${log.source || "-"}${log.reference ? ` | Ref: ${log.reference}` : ""}</div>
+        </div>`).join("");
+    }
+
+    async function loadAuditDashboard(){
+      el.auditBanner.className = "rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700";
+      el.auditBanner.textContent = "Running inspection...";
+      const [report, logs] = await Promise.all([apiGetAuditReport(), apiGetAuditLogs()]);
+      s.auditReport = report;
+      s.auditLogs = logs;
+      el.auditCheckedAt.textContent = `Last checked: ${formatDateTime(report.checkedAt)}`;
+      el.auditBanner.className = report.status === "ok"
+        ? "rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+        : "rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900";
+      el.auditBanner.textContent = report.status === "ok"
+        ? "Inspection passed. Inventory numbers are within protected audit limits."
+        : "Inspection found issues. Review the checks below before continuing stock work.";
+      renderAuditSummary(report);
+      renderAuditChecks(report);
+      renderAuditLogs(logs);
     }
 
     async function migrateLegacySalesToBackend(){
@@ -600,6 +745,7 @@
       el.editStockQty.value=Number.isFinite(currentRemaining)?currentRemaining:0;
       el.editStockPrice.value=Number.isFinite(row.price)?row.price:0;
       el.editStockStatus.value=(row.status && row.status.trim())?row.status:computeStatus(currentRemaining);
+      el.editStockReason.value="";
       el.editStockError.textContent="";
       el.stockEditModal.classList.remove("hidden"); el.stockEditModal.classList.add("flex");
     }
@@ -610,14 +756,16 @@
       const id=s.editingStockId; if(!id)return;
       const row=s.stockRows.find(r=>String(r.id)===String(id)); if(!row)return;
       const qty=Number(el.editStockQty.value), price=Number(el.editStockPrice.value), status=String(el.editStockStatus.value||"").trim();
+      const reason=String(el.editStockReason.value||"").trim();
       if(!Number.isFinite(qty) || qty<0){el.editStockError.textContent="Quantity must be 0 or more.";return;}
       if(!Number.isFinite(price) || price<0){el.editStockError.textContent="Price must be 0 or more.";return;}
       if(!status){el.editStockError.textContent="Stock status is required.";return;}
+      if(!reason){el.editStockError.textContent="Audit reason is required for manual inventory edits.";return;}
       try{
-        await apiUpdateBook(id,{ stock: qty, price, status });
         const posSales=s.stockSales[id]||0;
         const maxRemaining=Math.max(0,(row.prevStock||0)-posSales);
         if(qty>maxRemaining){el.editStockError.textContent=`Remaining cannot exceed ${maxRemaining} for this item.`;return;}
+        await apiUpdateBook(id,{ stock: qty, price, status, reason, source:"manual-ui", reference:`SL-${row.serialNo || row.id}` });
         row.baseSales = Math.max(0, (row.prevStock||0) - qty - posSales);
         row.baseRemaining = qty;
         row.price = price;
@@ -625,6 +773,7 @@
         localStorage.setItem(KEYS.SB,JSON.stringify(s.stockRows));
         drawStock();
         closeStockEdit();
+        try{ await loadAuditDashboard(); }catch(_){}
       }catch(err){
         el.editStockError.textContent = err.message;
       }
@@ -717,6 +866,7 @@
       }
       pdf(tx,t);
       try{await sendReceiptEmail(tx,t);}catch(_){console.warn("Email execution skipped/failed.");}
+      try{await loadAuditDashboard();}catch(_){}
       s.cart=[]; drawCart(); alert("Transaction Successful. Receipt Generated and Inventory Updated.");
     }
 
@@ -764,6 +914,20 @@
 
       [el.cn,el.cp,el.ce,el.ca,el.cz].forEach(i=>i.addEventListener("input",persistCustomer));
 
+      el.auditBtn.onclick=async ()=>{
+        el.auditModal.classList.remove("hidden");
+        el.auditModal.classList.add("flex");
+        try{
+          await loadAuditDashboard();
+        }catch(err){
+          el.auditCheckedAt.textContent = "Inspection failed";
+          el.auditBanner.className = "rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800";
+          el.auditBanner.textContent = err.message;
+        }
+      };
+      el.closeAuditBtn.onclick=()=>{ el.auditModal.classList.add("hidden"); el.auditModal.classList.remove("flex"); };
+      el.auditModal.onclick=e=>{ if(e.target===el.auditModal){ el.auditModal.classList.add("hidden"); el.auditModal.classList.remove("flex"); } };
+
       el.stockBtn.onclick=()=>{ el.stockModal.classList.remove("hidden"); el.stockModal.classList.add("flex"); drawStock(); };
       el.closeStockBtn.onclick=()=>{ el.stockModal.classList.add("hidden"); el.stockModal.classList.remove("flex"); };
       el.stockModal.onclick=e=>{ if(e.target===el.stockModal){ el.stockModal.classList.add("hidden"); el.stockModal.classList.remove("flex"); } };
@@ -778,6 +942,7 @@
         try{
           await migrateLegacySalesToBackend();
           await syncSalesFromBackend();
+          await loadAuditDashboard();
         }catch(_){}
       })();
     }
