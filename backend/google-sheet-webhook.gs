@@ -1,8 +1,11 @@
+var SHEET_ID = "YOUR_GOOGLE_SHEET_ID";
+
 function doPost(e) {
   try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Inventory Audit");
+    var spreadsheet = SpreadsheetApp.openById(SHEET_ID);
+    var sheet = spreadsheet.getSheetByName("Inventory Audit");
     if (!sheet) {
-      sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Inventory Audit");
+      sheet = spreadsheet.insertSheet("Inventory Audit");
       sheet.appendRow([
         "Timestamp",
         "Event Type",

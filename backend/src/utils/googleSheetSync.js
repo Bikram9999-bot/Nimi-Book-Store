@@ -60,6 +60,11 @@ async function syncAuditLogsToGoogleSheet(logs = []) {
       throw new Error(`Google Sheet webhook returned ${response.status}`);
     }
 
+    const result = await response.json().catch(() => null);
+    if (!result || result.ok !== true) {
+      throw new Error(result?.error || "Google Sheet webhook did not confirm success");
+    }
+
     await markLogs(ids, "synced");
     return { synced: normalized.length, skipped: 0 };
   } catch (error) {
