@@ -73,7 +73,30 @@ async function syncAuditLogsToGoogleSheet(logs = []) {
   }
 }
 
+async function retryUnsyncedAuditLogs(options = {}) {
+  const limit = Math.min(Math.max(Number(options.limit) || 100, 1), 500);
+  const statuses = Array.isArray(options.statuses) && options.statuses.length
+    ? options.statuses
+    : ["failed", "pending", "skipped"];
+
+  const logs = await AuditLog.find({ sheetSyncStatus: { $in: statuses } })
+    .sort({ createdAt: 1 })
+    .limit(limit);
+
+  if (!logs.length) {
+    return { retried: 0, synced: 0, skipped: 0 };
+  }
+
+  const result = await syncAuditLogsToGoogleSheet(logs);
+  return {
+    retried: logs.length,
+    synced: result.synced || 0,
+    skipped: result.skipped || 0
+  };
+}
+
 module.exports = {
   isGoogleSheetSyncEnabled,
-  syncAuditLogsToGoogleSheet
+  syncAuditLogsToGoogleSheet,
+  retryUnsyncedAuditLogs
 };

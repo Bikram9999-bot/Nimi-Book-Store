@@ -301,9 +301,12 @@
           <h2 class="text-lg font-bold text-slate-900">Inspection & Audit Unit</h2>
           <div id="auditCheckedAt" class="text-xs text-slate-500 mt-1">Checking system...</div>
         </div>
-        <button id="closeAuditBtn" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+        <div class="flex items-center gap-2">
+          <button id="retryAuditSyncBtn" class="bg-white border border-slate-300 text-slate-700 font-semibold py-2.5 px-5 rounded-lg shadow-sm hover:bg-slate-50 focus:ring-2 focus:ring-slate-200 focus:ring-offset-2 transition-all text-xs py-2 px-3">Retry Failed Sync</button>
+          <button id="closeAuditBtn" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
       </div>
       <div class="p-6 overflow-y-auto space-y-6">
         <div id="auditBanner" class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">Running inspection...</div>
@@ -345,7 +348,7 @@
       status:$("status"),bookCount:$("bookCount"),q:$("q"),dd:$("dd"),add:$("add"),sel:$("sel"),
       cart:$("cart"),sub:$("sub"),tier:$("tier"),disc:$("disc"),tot:$("tot"),clear:$("clear"),pdf:$("pdf"),
       history:$("history"),historyCount:$("historyCount"),ledgerSummary:$("ledgerSummary"),ledgerSearch:$("ledgerSearch"),txDetail:$("txDetail"),cn:$("cn"),cp:$("cp"),ce:$("ce"),ca:$("ca"),cz:$("cz"),cerr:$("cerr"),
-      auditBtn:$("auditBtn"),auditModal:$("auditModal"),closeAuditBtn:$("closeAuditBtn"),auditCheckedAt:$("auditCheckedAt"),auditBanner:$("auditBanner"),auditSummary:$("auditSummary"),auditChecks:$("auditChecks"),auditLogs:$("auditLogs"),
+      auditBtn:$("auditBtn"),auditModal:$("auditModal"),closeAuditBtn:$("closeAuditBtn"),retryAuditSyncBtn:$("retryAuditSyncBtn"),auditCheckedAt:$("auditCheckedAt"),auditBanner:$("auditBanner"),auditSummary:$("auditSummary"),auditChecks:$("auditChecks"),auditLogs:$("auditLogs"),
       stockBtn:$("stockBtn"),stockModal:$("stockModal"),closeStockBtn:$("closeStockBtn"),
       stockSearch:$("stockSearch"),stockBody:$("stockBody"),stockSummary:$("stockSummary"),
       stockEditModal:$("stockEditModal"),closeStockEditBtn:$("closeStockEditBtn"),
@@ -438,6 +441,17 @@
       const data = await res.json();
       if(!res.ok) throw new Error(data.error || "Failed to load audit logs");
       return data.logs || [];
+    }
+
+    async function apiRetryAuditSheetSync(){
+      const res = await fetch(`${API_BASE}/api/audit/retry-sheet-sync`,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ limit: 200, statuses: ["failed","pending","skipped"] })
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || "Failed to retry Google Sheet sync");
+      return data;
     }
 
     function formatDateTime(value){
@@ -986,6 +1000,22 @@
           el.auditCheckedAt.textContent = "Inspection failed";
           el.auditBanner.className = "rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800";
           el.auditBanner.textContent = err.message;
+        }
+      };
+      el.retryAuditSyncBtn.onclick=async ()=>{
+        el.retryAuditSyncBtn.disabled = true;
+        el.auditBanner.className = "rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800";
+        el.auditBanner.textContent = "Retrying failed Google Sheet sync events...";
+        try{
+          const result = await apiRetryAuditSheetSync();
+          await loadAuditDashboard();
+          el.auditBanner.className = "rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800";
+          el.auditBanner.textContent = result.message || "Retry completed.";
+        }catch(err){
+          el.auditBanner.className = "rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800";
+          el.auditBanner.textContent = err.message;
+        }finally{
+          el.retryAuditSyncBtn.disabled = false;
         }
       };
       el.closeAuditBtn.onclick=()=>{ el.auditModal.classList.add("hidden"); el.auditModal.classList.remove("flex"); };

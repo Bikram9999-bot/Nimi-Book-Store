@@ -1,7 +1,7 @@
 const Book = require("../models/Book");
 const Sale = require("../models/Sale");
 const AuditLog = require("../models/AuditLog");
-const { isGoogleSheetSyncEnabled } = require("../utils/googleSheetSync");
+const { isGoogleSheetSyncEnabled, retryUnsyncedAuditLogs } = require("../utils/googleSheetSync");
 
 function buildCheck(code, status, message, details = {}) {
   return { code, status, message, details };
@@ -202,4 +202,26 @@ async function getAuditLogs(req, res, next) {
   }
 }
 
-module.exports = { getAuditReport, getAuditLogs };
+async function retryAuditSheetSync(req, res, next) {
+  try {
+    if (!isGoogleSheetSyncEnabled()) {
+      return res.status(400).json({ error: "Google Sheet webhook is not configured." });
+    }
+
+    const result = await retryUnsyncedAuditLogs({
+      limit: req.body.limit,
+      statuses: Array.isArray(req.body.statuses) ? req.body.statuses : undefined
+    });
+
+    return res.status(200).json({
+      message: result.retried
+        ? `Retried ${result.retried} unsynced audit event(s).`
+        : "No unsynced audit events found.",
+      ...result
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { getAuditReport, getAuditLogs, retryAuditSheetSync };
