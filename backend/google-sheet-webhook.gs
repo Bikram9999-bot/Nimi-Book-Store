@@ -48,13 +48,35 @@ function ensureAuditSheet(spreadsheet) {
   return sheet;
 }
 
+function resetAuditSheet(sheet) {
+  sheet.clear();
+  sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+  sheet.setFrozenRows(1);
+  sheet.getRange(1, 1, 1, HEADERS.length)
+    .setFontWeight("bold")
+    .setBackground("#dbeafe")
+    .setFontColor("#1e3a8a");
+  sheet.setColumnWidths(1, HEADERS.length, 130);
+  sheet.setColumnWidth(5, 320);
+  sheet.setColumnWidth(6, 170);
+  sheet.setColumnWidth(14, 320);
+  sheet.setColumnWidth(15, 220);
+  sheet.getRange("A:O").setVerticalAlignment("middle");
+  sheet.getRange("A:O").setWrap(true);
+}
+
 function doPost(e) {
   try {
     var spreadsheet = SpreadsheetApp.openById(SHEET_ID);
     var sheet = ensureAuditSheet(spreadsheet);
 
     var payload = JSON.parse(e.postData.contents || "{}");
+    var mode = payload.mode || "append";
     var rows = Array.isArray(payload.rows) ? payload.rows : [];
+
+    if (mode === "replace") {
+      resetAuditSheet(sheet);
+    }
 
     rows.forEach(function (row) {
       sheet.appendRow([
@@ -75,6 +97,12 @@ function doPost(e) {
         row.syncId || ""
       ]);
     });
+
+    if (sheet.getFilter()) {
+      sheet.getFilter().remove();
+    }
+    var lastRow = Math.max(sheet.getLastRow(), 1);
+    sheet.getRange(1, 1, lastRow, HEADERS.length).createFilter();
 
     if (rows.length) {
       var startRow = sheet.getLastRow() - rows.length + 1;

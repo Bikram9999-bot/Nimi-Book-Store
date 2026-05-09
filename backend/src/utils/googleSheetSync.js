@@ -59,7 +59,7 @@ async function markLogs(ids, status, extra = {}) {
   );
 }
 
-async function syncAuditLogsToGoogleSheet(logs = []) {
+async function syncAuditLogsToGoogleSheet(logs = [], options = {}) {
   const normalized = logs.filter(Boolean);
   if (!normalized.length) return { synced: 0, skipped: 0 };
 
@@ -73,7 +73,10 @@ async function syncAuditLogsToGoogleSheet(logs = []) {
     const response = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rows: normalized.map(toSheetPayload) })
+      body: JSON.stringify({
+        mode: options.mode === "replace" ? "replace" : "append",
+        rows: normalized.map(toSheetPayload)
+      })
     });
 
     if (!response.ok) {
@@ -115,8 +118,27 @@ async function retryUnsyncedAuditLogs(options = {}) {
   };
 }
 
+async function rebuildGoogleSheetFromAuditLogs(options = {}) {
+  const limit = Math.min(Math.max(Number(options.limit) || 5000, 1), 20000);
+  const logs = await AuditLog.find()
+    .sort({ createdAt: 1 })
+    .limit(limit);
+
+  if (!logs.length) {
+    return { resynced: 0, synced: 0, skipped: 0 };
+  }
+
+  const result = await syncAuditLogsToGoogleSheet(logs, { mode: "replace" });
+  return {
+    resynced: logs.length,
+    synced: result.synced || 0,
+    skipped: result.skipped || 0
+  };
+}
+
 module.exports = {
   isGoogleSheetSyncEnabled,
   syncAuditLogsToGoogleSheet,
-  retryUnsyncedAuditLogs
+  retryUnsyncedAuditLogs,
+  rebuildGoogleSheetFromAuditLogs
 };
