@@ -22,7 +22,15 @@ const auditLogSchema = new mongoose.Schema(
     before: { type: snapshotSchema, default: () => ({}) },
     after: { type: snapshotSchema, default: () => ({}) },
     deltaStock: { type: Number, default: 0 },
-    meta: { type: mongoose.Schema.Types.Mixed, default: {} }
+    meta: { type: mongoose.Schema.Types.Mixed, default: {} },
+    sheetSyncStatus: {
+      type: String,
+      enum: ["pending", "synced", "failed", "skipped"],
+      default: "pending",
+      index: true
+    },
+    sheetSyncedAt: { type: Date, default: null },
+    sheetSyncError: { type: String, default: "", trim: true }
   },
   { timestamps: true }
 );

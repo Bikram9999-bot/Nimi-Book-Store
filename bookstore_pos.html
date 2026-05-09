@@ -181,12 +181,28 @@
             <h3 class="text-sm font-bold tracking-wide text-slate-800 uppercase">Recent Ledger</h3>
             <span class="text-[10px] uppercase font-bold text-slate-400">Last 50 entries</span>
           </div>
-          <div class="p-4 grid grid-cols-1 gap-4 overflow-hidden h-[400px]">
+          <div class="p-4 grid grid-cols-1 gap-4 overflow-hidden h-[430px]">
+            <div class="grid grid-cols-1 gap-3">
+              <div id="ledgerSummary" class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div class="text-[11px] uppercase tracking-wide font-bold text-slate-400">Last Receipt</div>
+                <div class="mt-2 text-sm text-slate-500">No receipt processed yet.</div>
+              </div>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <input id="ledgerSearch" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-shadow bg-white pl-9" placeholder="Search by receipt ID or customer name">
+              </div>
+              <div class="flex items-center justify-between text-[11px] uppercase font-bold tracking-wide text-slate-400">
+                <span>Receipt List</span>
+                <span id="historyCount">0 matches</span>
+              </div>
+            </div>
             <div id="history" class="overflow-y-auto pr-2 space-y-2 h-[160px] border-b border-slate-100 pb-4">
               <div class="text-sm text-slate-500 italic p-2 text-center">No transactions recorded yet.</div>
             </div>
             <div class="overflow-y-auto h-[220px] bg-slate-50 rounded-lg border border-slate-200 p-4">
-              <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Transaction Blueprint</h4>
+              <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Receipt Detail</h4>
               <div id="txDetail" class="text-sm text-slate-600">Select a ledger entry above to inspect line items and totals.</div>
             </div>
           </div>
@@ -328,7 +344,7 @@
       loginScreen:$("loginScreen"),loginPassword:$("loginPassword"),loginBtn:$("loginBtn"),loginError:$("loginError"),appRoot:$("appRoot"),logoutBtn:$("logoutBtn"),
       status:$("status"),bookCount:$("bookCount"),q:$("q"),dd:$("dd"),add:$("add"),sel:$("sel"),
       cart:$("cart"),sub:$("sub"),tier:$("tier"),disc:$("disc"),tot:$("tot"),clear:$("clear"),pdf:$("pdf"),
-      history:$("history"),txDetail:$("txDetail"),cn:$("cn"),cp:$("cp"),ce:$("ce"),ca:$("ca"),cz:$("cz"),cerr:$("cerr"),
+      history:$("history"),historyCount:$("historyCount"),ledgerSummary:$("ledgerSummary"),ledgerSearch:$("ledgerSearch"),txDetail:$("txDetail"),cn:$("cn"),cp:$("cp"),ce:$("ce"),ca:$("ca"),cz:$("cz"),cerr:$("cerr"),
       auditBtn:$("auditBtn"),auditModal:$("auditModal"),closeAuditBtn:$("closeAuditBtn"),auditCheckedAt:$("auditCheckedAt"),auditBanner:$("auditBanner"),auditSummary:$("auditSummary"),auditChecks:$("auditChecks"),auditLogs:$("auditLogs"),
       stockBtn:$("stockBtn"),stockModal:$("stockModal"),closeStockBtn:$("closeStockBtn"),
       stockSearch:$("stockSearch"),stockBody:$("stockBody"),stockSummary:$("stockSummary"),
@@ -516,7 +532,9 @@
         ["Prev Stock Units", report.summary.totalStockUnits],
         ["Current Units", report.summary.currentUnits],
         ["Low Stock", report.summary.lowStockCount],
-        ["Out of Stock", report.summary.outOfStockCount]
+        ["Out of Stock", report.summary.outOfStockCount],
+        ["Sheet Synced", report.summary.sheetSyncSummary?.synced ?? 0],
+        ["Sheet Failed", report.summary.sheetSyncSummary?.failed ?? 0]
       ];
       el.auditSummary.innerHTML = cards.map(([label, value])=>`
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -561,7 +579,38 @@
           <div class="mt-2 text-sm text-slate-700">${log.message || "Inventory change recorded."}</div>
           <div class="mt-2 text-xs text-slate-500">Before: ${log.before?.stock ?? 0} | After: ${log.after?.stock ?? 0} | Delta: ${log.deltaStock ?? 0}</div>
           <div class="mt-1 text-xs text-slate-400">Source: ${log.source || "-"}${log.reference ? ` | Ref: ${log.reference}` : ""}</div>
+          <div class="mt-2 inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${log.sheetSyncStatus==="synced"?"bg-green-100 text-green-700":log.sheetSyncStatus==="failed"?"bg-red-100 text-red-700":"bg-slate-100 text-slate-600"}">Sheet ${log.sheetSyncStatus || "pending"}</div>
+          ${log.sheetSyncError ? `<div class="mt-2 text-xs text-red-600">${log.sheetSyncError}</div>` : ""}
         </div>`).join("");
+    }
+
+    function renderLedgerSummary(tx){
+      if(!tx){
+        el.ledgerSummary.innerHTML = '<div class="text-[11px] uppercase tracking-wide font-bold text-slate-400">Last Receipt</div><div class="mt-2 text-sm text-slate-500">No receipt processed yet.</div>';
+        return;
+      }
+      el.ledgerSummary.innerHTML = `
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-[11px] uppercase tracking-wide font-bold text-slate-400">Last Receipt</div>
+            <div class="mt-2 font-mono text-sm font-bold text-slate-900">${tx.no}</div>
+            <div class="mt-1 text-xs text-slate-500">${tx.date}</div>
+          </div>
+          <div class="rounded-lg bg-white border border-slate-200 px-3 py-2 text-right">
+            <div class="text-[10px] uppercase font-bold tracking-wide text-slate-400">Total</div>
+            <div class="text-lg font-black text-brand-600">${fmt(tx.total)}</div>
+          </div>
+        </div>
+        <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
+          <div class="rounded-lg bg-white border border-slate-200 px-3 py-2">
+            <div class="uppercase tracking-wide font-bold text-slate-400">Customer</div>
+            <div class="mt-1 text-sm font-semibold text-slate-800">${tx.customer?.name || "-"}</div>
+          </div>
+          <div class="rounded-lg bg-white border border-slate-200 px-3 py-2">
+            <div class="uppercase tracking-wide font-bold text-slate-400">Items</div>
+            <div class="mt-1 text-sm font-semibold text-slate-800">${tx.items || 0}</div>
+          </div>
+        </div>`;
     }
 
     async function loadAuditDashboard(){
@@ -709,19 +758,32 @@
     const saveTx=()=>localStorage.setItem(KEYS.TX,JSON.stringify(s.tx.slice(0,50)));
 
     function drawHistory(){
-      if(!s.tx.length){el.history.innerHTML='<div class="text-sm text-slate-500 italic p-2 text-center h-full flex items-center justify-center">No transactions recorded yet.</div>'; drawTxDetail(null); return;}
+      renderLedgerSummary(s.tx[0] || null);
+      const query = String(el.ledgerSearch?.value || "").trim().toLowerCase();
+      const list = s.tx.filter(tx=>{
+        if(!query) return true;
+        return String(tx.no || "").toLowerCase().includes(query) || String(tx.customer?.name || "").toLowerCase().includes(query);
+      });
+      el.historyCount.textContent = `${list.length} match${list.length===1?"":"es"}`;
+      if(!list.length){
+        el.history.innerHTML = s.tx.length
+          ? '<div class="text-sm text-slate-500 italic p-2 text-center h-full flex items-center justify-center">No receipts match your search.</div>'
+          : '<div class="text-sm text-slate-500 italic p-2 text-center h-full flex items-center justify-center">No transactions recorded yet.</div>';
+        drawTxDetail(null);
+        return;
+      }
       el.history.innerHTML="";
-      s.tx.forEach(x=>{
+      list.forEach(x=>{
         const isActive = s.selectedTxNo===x.no;
         const activeClass = isActive ? "bg-brand-50 border-brand-200 ring-1 ring-brand-500" : "bg-white border-slate-200 hover:bg-slate-50";
         const badge = isActive ? '<span class="bg-brand-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Active</span>' : "";
         const d=document.createElement("div");
         d.className=`border rounded-xl p-3 cursor-pointer transition-all ${activeClass}`;
-        d.innerHTML=`<div class="flex justify-between items-center mb-1"><b class="text-xs font-mono text-slate-800">${x.no}</b>${badge}</div><div class="text-[11px] text-slate-500 mb-2">${x.date}</div><div class="flex justify-between items-end"><div class="text-xs text-slate-600 truncate max-w-[150px] font-medium">${x.customer.name}</div><div class="text-right"><div class="text-[10px] text-slate-400 uppercase tracking-wider">${x.items} Items</div><div class="text-sm font-bold text-slate-900">${fmt(x.total)}</div></div></div>`;
+        d.innerHTML=`<div class="flex justify-between items-start gap-3 mb-2"><div><b class="text-xs font-mono text-slate-800">${x.no}</b><div class="text-[11px] text-slate-500 mt-1">${x.date}</div></div>${badge}</div><div class="flex items-end justify-between gap-3"><div class="min-w-0"><div class="text-[10px] uppercase tracking-wide font-bold text-slate-400">Customer</div><div class="text-sm text-slate-700 truncate max-w-[170px] font-semibold">${x.customer.name}</div></div><div class="text-right"><div class="text-[10px] text-slate-400 uppercase tracking-wider">${x.items} Items</div><div class="text-sm font-bold text-slate-900">${fmt(x.total)}</div></div></div>`;
         d.onclick = () => { s.selectedTxNo=x.no; drawHistory(); };
         el.history.appendChild(d);
       });
-      const tx=s.tx.find(x=>x.no===s.selectedTxNo)||s.tx[0];
+      const tx=list.find(x=>x.no===s.selectedTxNo)||list[0];
       s.selectedTxNo=tx.no;
       drawTxDetail(tx);
     }
@@ -729,7 +791,7 @@
     function drawTxDetail(tx){
       if(!tx){el.txDetail.innerHTML="<div class='text-center text-slate-400 mt-10'>Select a transaction to review items and amounts.</div>";return;}
       const rows=(tx.lines||[]).map(l=>`<tr class="border-b border-slate-100 last:border-0"><td class="py-2 text-slate-800 font-medium whitespace-normal max-w-[150px] leading-tight">${l.title}</td><td class="py-2 text-slate-500 text-right">${fmt(l.price)}</td><td class="py-2 text-center font-bold text-slate-700">${l.qty}</td><td class="py-2 text-right font-bold text-slate-900">${fmt(l.amount)}</td></tr>`).join("");
-      el.txDetail.innerHTML=`<div class="flex justify-between items-start mb-4 border-b border-slate-200 pb-3"><div><div class="font-mono text-sm font-bold text-slate-900">${tx.no}</div><div class="text-xs text-slate-500 mt-1">${tx.date}</div></div><div class="bg-white px-3 py-1.5 rounded border border-slate-200 text-right shadow-sm"><div class="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-0.5">Billed To</div><div class="text-xs font-bold text-brand-700">${tx.customer.name}</div></div></div><table class="w-full text-xs text-left mb-4"><thead class="text-slate-400 uppercase tracking-wider"><tr><th class="pb-2">Item</th><th class="pb-2 text-right">Rate</th><th class="pb-2 text-center">Qty</th><th class="pb-2 text-right">Amt</th></tr></thead><tbody>${rows}</tbody></table><div class="border-t border-slate-200 pt-3 space-y-1.5 text-xs"><div class="flex justify-between text-slate-600"><span>Subtotal</span><span>${fmt(tx.sub)}</span></div><div class="flex justify-between text-green-600 font-medium"><span>Discount (${tx.dp}%)</span><span>- ${fmt(tx.disc)}</span></div><div class="flex justify-between text-base font-black text-slate-900 pt-2 mt-2 border-t border-slate-200"><span>TOTAL</span><span>${fmt(tx.total)}</span></div></div>`;
+      el.txDetail.innerHTML=`<div class="space-y-4"><div class="flex justify-between items-start gap-4 border-b border-slate-200 pb-3"><div><div class="font-mono text-sm font-bold text-slate-900">${tx.no}</div><div class="text-xs text-slate-500 mt-1">${tx.date}</div></div><div class="rounded-lg bg-white border border-slate-200 px-3 py-2 text-right shadow-sm"><div class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Net Total</div><div class="text-base font-black text-brand-600">${fmt(tx.total)}</div></div></div><div class="grid grid-cols-2 gap-3 text-xs"><div class="rounded-lg bg-white border border-slate-200 px-3 py-2"><div class="uppercase tracking-wide font-bold text-slate-400">Customer</div><div class="mt-1 text-sm font-semibold text-slate-800">${tx.customer.name || "-"}</div><div class="mt-1 text-slate-500">${tx.customer.phone || "-"}</div></div><div class="rounded-lg bg-white border border-slate-200 px-3 py-2"><div class="uppercase tracking-wide font-bold text-slate-400">Contact</div><div class="mt-1 text-sm font-semibold text-slate-800 break-all">${tx.customer.email || "-"}</div><div class="mt-1 text-slate-500">${tx.customer.pincode || "-"}</div></div></div><table class="w-full text-xs text-left mb-4"><thead class="text-slate-400 uppercase tracking-wider"><tr><th class="pb-2">Item</th><th class="pb-2 text-right">Rate</th><th class="pb-2 text-center">Qty</th><th class="pb-2 text-right">Amt</th></tr></thead><tbody>${rows}</tbody></table><div class="border-t border-slate-200 pt-3 space-y-1.5 text-xs"><div class="flex justify-between text-slate-600"><span>Subtotal</span><span>${fmt(tx.sub)}</span></div><div class="flex justify-between text-green-600 font-medium"><span>Discount (${tx.dp}%)</span><span>- ${fmt(tx.disc)}</span></div><div class="flex justify-between text-base font-black text-slate-900 pt-2 mt-2 border-t border-slate-200"><span>TOTAL</span><span>${fmt(tx.total)}</span></div></div></div>`;
     }
 
     function getRemainingStock(id){ const row=s.stockRows.find(r=>String(r.id)===String(id)); if(!row)return 0; const posSales=s.stockSales[id]||0; const totalSales=(row.baseSales||0)+posSales; return Math.max(0,(row.prevStock||0)-totalSales); }
@@ -913,6 +975,7 @@
       el.pdf.onclick=checkout;
 
       [el.cn,el.cp,el.ce,el.ca,el.cz].forEach(i=>i.addEventListener("input",persistCustomer));
+      el.ledgerSearch.oninput=drawHistory;
 
       el.auditBtn.onclick=async ()=>{
         el.auditModal.classList.remove("hidden");

@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Book = require("../models/Book");
 const Sale = require("../models/Sale");
 const { writeAuditLog } = require("../utils/auditLogger");
+const { syncAuditLogsToGoogleSheet } = require("../utils/googleSheetSync");
 
 function parseNumber(value, fallback = 0) {
   const num = Number(value);
@@ -216,6 +217,7 @@ async function completeSale(req, res, next) {
     }
 
     let savedSale = null;
+    const auditLogsToSync = [];
     await session.withTransaction(async () => {
       for (const line of sale.lines) {
         const beforeBook = await Book.findById(line.bookId).session(session);
@@ -234,7 +236,7 @@ async function completeSale(req, res, next) {
           stockError.statusCode = 400;
           throw stockError;
         }
-        await writeAuditLog({
+        const auditLog = await writeAuditLog({
           eventType: "inventory_sale_adjustment",
           source: sale.source || "pos",
           reference: sale.receiptNo,
@@ -247,6 +249,9 @@ async function completeSale(req, res, next) {
           },
           session
         });
+        if (auditLog) {
+          auditLogsToSync.push(auditLog);
+        }
       }
 
       const created = await Sale.create(
@@ -273,6 +278,10 @@ async function completeSale(req, res, next) {
         { session }
       );
       savedSale = created[0];
+    });
+
+    syncAuditLogsToGoogleSheet(auditLogsToSync).catch((error) => {
+      console.error("Google Sheet sync failed:", error.message);
     });
 
     return res.status(201).json({ sale: mapSale(savedSale) });

@@ -37,7 +37,8 @@ async function writeAuditLog({
     meta: meta && typeof meta === "object" ? meta : {}
   };
 
-  return AuditLog.create([payload], session ? { session } : undefined);
+  const created = await AuditLog.create([payload], session ? { session } : undefined);
+  return created[0] || null;
 }
 
 module.exports = { writeAuditLog, snapshotFromBook };

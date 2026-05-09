@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Book = require("../models/Book");
 const { writeAuditLog } = require("../utils/auditLogger");
+const { syncAuditLogsToGoogleSheet } = require("../utils/googleSheetSync");
 
 function isValidId(id) {
   return mongoose.Types.ObjectId.isValid(id);
@@ -54,11 +55,14 @@ async function createBook(req, res, next) {
       category: String(category || "").trim(),
       status: String(status || "").trim()
     });
-    await writeAuditLog({
+    const auditLog = await writeAuditLog({
       eventType: "book_created",
       source: "api",
       message: "Book record created.",
       after: book
+    });
+    syncAuditLogsToGoogleSheet([auditLog]).catch((error) => {
+      console.error("Google Sheet sync failed:", error.message);
     });
     return res.status(201).json({ book });
   } catch (err) {
@@ -100,7 +104,7 @@ async function updateBook(req, res, next) {
     }
 
     const book = await Book.findByIdAndUpdate(id, update, { new: true });
-    await writeAuditLog({
+    const auditLog = await writeAuditLog({
       eventType: "inventory_manual_update",
       source: String(req.body.source || "manual-ui").trim(),
       reference: String(req.body.reference || "").trim(),
@@ -110,6 +114,9 @@ async function updateBook(req, res, next) {
       meta: {
         changedFields: Object.keys(update)
       }
+    });
+    syncAuditLogsToGoogleSheet([auditLog]).catch((error) => {
+      console.error("Google Sheet sync failed:", error.message);
     });
     return res.status(200).json({ book });
   } catch (err) {
@@ -123,11 +130,14 @@ async function deleteBook(req, res, next) {
     if (!isValidId(id)) return res.status(400).json({ error: "invalid id" });
     const book = await Book.findByIdAndDelete(id);
     if (!book) return res.status(404).json({ error: "book not found" });
-    await writeAuditLog({
+    const auditLog = await writeAuditLog({
       eventType: "book_deleted",
       source: "api",
       message: "Book record deleted.",
       before: book
+    });
+    syncAuditLogsToGoogleSheet([auditLog]).catch((error) => {
+      console.error("Google Sheet sync failed:", error.message);
     });
     return res.status(200).json({ message: "book removed" });
   } catch (err) {
@@ -158,7 +168,7 @@ async function updateStock(req, res, next) {
       if (!exists) return res.status(404).json({ error: "book not found" });
       return res.status(400).json({ error: "insufficient stock" });
     }
-    await writeAuditLog({
+    const auditLog = await writeAuditLog({
       eventType: "inventory_sale_adjustment",
       source: String(req.body.source || "stock-endpoint").trim(),
       reference: String(req.body.reference || "").trim(),
@@ -166,6 +176,9 @@ async function updateStock(req, res, next) {
       before: beforeBook,
       after: book,
       meta: { quantity: qty }
+    });
+    syncAuditLogsToGoogleSheet([auditLog]).catch((error) => {
+      console.error("Google Sheet sync failed:", error.message);
     });
 
     return res.status(200).json({ book });

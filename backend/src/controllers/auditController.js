@@ -1,6 +1,7 @@
 const Book = require("../models/Book");
 const Sale = require("../models/Sale");
 const AuditLog = require("../models/AuditLog");
+const { isGoogleSheetSyncEnabled } = require("../utils/googleSheetSync");
 
 function buildCheck(code, status, message, details = {}) {
   return { code, status, message, details };
@@ -14,7 +15,7 @@ function normalizeLimit(value, fallback = 50, max = 200) {
 
 async function getAuditReport(req, res, next) {
   try {
-    const [books, recentSalesCount, recentAuditLogs, duplicateSerials, missingBookRefs] = await Promise.all([
+    const [books, recentSalesCount, recentAuditLogs, duplicateSerials, missingBookRefs, syncCounts] = await Promise.all([
       Book.find().select("title stock totalStock price status serialNo").lean(),
       Sale.countDocuments(),
       AuditLog.find().sort({ createdAt: -1 }).limit(10).lean(),
@@ -35,6 +36,9 @@ async function getAuditReport(req, res, next) {
         },
         { $match: { bookMatch: { $size: 0 } } },
         { $limit: 25 }
+      ]),
+      AuditLog.aggregate([
+        { $group: { _id: "$sheetSyncStatus", count: { $sum: 1 } } }
       ])
     ]);
 
@@ -48,8 +52,23 @@ async function getAuditReport(req, res, next) {
     const currentUnits = books.reduce((sum, book) => sum + (Number(book.stock) || 0), 0);
     const protectedInventory = books.filter((book) => Number(book.totalStock) >= Number(book.stock)).length;
 
+    const syncSummary = syncCounts.reduce(
+      (acc, item) => {
+        acc[item._id || "pending"] = item.count;
+        return acc;
+      },
+      { pending: 0, synced: 0, failed: 0, skipped: 0 }
+    );
+
     const checks = [
       buildCheck("database_connection", "pass", "MongoDB connection is active."),
+      buildCheck(
+        "google_sheet_sync",
+        isGoogleSheetSyncEnabled() ? "pass" : "fail",
+        isGoogleSheetSyncEnabled()
+          ? "Google Sheet webhook is configured for inventory documentation."
+          : "Google Sheet webhook is not configured yet."
+      ),
       buildCheck(
         "inventory_numbers_protected",
         stockAboveTotal.length ? "fail" : "pass",
@@ -99,6 +118,14 @@ async function getAuditReport(req, res, next) {
         missingBookRefs.length
           ? `${missingBookRefs.length} sale lines reference missing books.`
           : "All sale lines reference valid books."
+      ),
+      buildCheck(
+        "google_sheet_delivery",
+        syncSummary.failed > 0 ? "fail" : "pass",
+        syncSummary.failed > 0
+          ? `${syncSummary.failed} audit events failed to sync to Google Sheet.`
+          : "No Google Sheet sync failures detected.",
+        { syncSummary }
       )
     ];
 
@@ -116,7 +143,9 @@ async function getAuditReport(req, res, next) {
         lowStockCount: lowStock.length,
         outOfStockCount: outOfStock.length,
         salesCount: recentSalesCount,
-        recentAuditEventCount: recentAuditLogs.length
+        recentAuditEventCount: recentAuditLogs.length,
+        sheetSyncEnabled: isGoogleSheetSyncEnabled(),
+        sheetSyncSummary: syncSummary
       },
       checks,
       recentAuditLogs: recentAuditLogs.map((log) => ({
@@ -130,7 +159,10 @@ async function getAuditReport(req, res, next) {
         after: log.after,
         deltaStock: log.deltaStock,
         createdAt: log.createdAt,
-        message: log.message
+        message: log.message,
+        sheetSyncStatus: log.sheetSyncStatus,
+        sheetSyncedAt: log.sheetSyncedAt,
+        sheetSyncError: log.sheetSyncError
       }))
     });
   } catch (err) {
@@ -159,7 +191,10 @@ async function getAuditLogs(req, res, next) {
         deltaStock: log.deltaStock,
         createdAt: log.createdAt,
         message: log.message,
-        meta: log.meta || {}
+        meta: log.meta || {},
+        sheetSyncStatus: log.sheetSyncStatus,
+        sheetSyncedAt: log.sheetSyncedAt,
+        sheetSyncError: log.sheetSyncError
       }))
     });
   } catch (err) {
