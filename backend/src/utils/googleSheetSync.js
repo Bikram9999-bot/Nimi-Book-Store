@@ -7,19 +7,39 @@ function isGoogleSheetSyncEnabled() {
 }
 
 function toSheetPayload(log) {
+  const beforeStock = Number(log.before?.stock) || 0;
+  const afterStock = Number(log.after?.stock) || 0;
+  const deltaStock = Number(log.deltaStock) || 0;
+  const previousStock = Number(log.after?.totalStock ?? log.before?.totalStock) || 0;
+  const price = Number(log.after?.price ?? log.before?.price) || 0;
+  const status = String(log.after?.status || log.before?.status || "").trim();
+  const timestamp = log.createdAt || new Date().toISOString();
+  const eventType = String(log.eventType || "");
+  const eventLabelMap = {
+    inventory_sale_adjustment: "Sale Deduction",
+    inventory_manual_update: "Manual Stock Edit",
+    book_created: "Book Created",
+    book_deleted: "Book Deleted"
+  };
+
   return {
-    timestamp: log.createdAt || new Date().toISOString(),
-    eventType: log.eventType || "",
+    timestamp,
+    date: new Date(timestamp).toLocaleDateString("en-CA"),
+    time: new Date(timestamp).toLocaleTimeString("en-IN", { hour12: true }),
+    eventType,
+    eventLabel: eventLabelMap[eventType] || eventType.replaceAll("_", " "),
     source: log.source || "",
     reference: log.reference || "",
     serialNo: Number(log.serialNo) || 0,
     title: log.title || "",
-    beforeStock: Number(log.before?.stock) || 0,
-    afterStock: Number(log.after?.stock) || 0,
-    deltaStock: Number(log.deltaStock) || 0,
-    previousStock: Number(log.after?.totalStock ?? log.before?.totalStock) || 0,
-    price: Number(log.after?.price ?? log.before?.price) || 0,
-    status: String(log.after?.status || log.before?.status || "").trim(),
+    bookDisplay: `${Number(log.serialNo) || 0} - ${log.title || ""}`.trim(),
+    beforeStock,
+    afterStock,
+    deltaStock,
+    stockMovement: `${beforeStock} -> ${afterStock} (${deltaStock >= 0 ? "+" : ""}${deltaStock})`,
+    previousStock,
+    price,
+    status,
     message: log.message || "",
     syncId: String(log._id || "")
   };
