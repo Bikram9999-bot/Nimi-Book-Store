@@ -179,7 +179,10 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col">
           <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <h3 class="text-sm font-bold tracking-wide text-slate-800 uppercase">Recent Ledger</h3>
-            <span class="text-[10px] uppercase font-bold text-slate-400">Last 50 entries</span>
+            <div class="flex items-center gap-2">
+              <button id="receiptBtn" class="bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg shadow-sm hover:bg-slate-50 focus:ring-2 focus:ring-slate-200 focus:ring-offset-2 transition-all text-xs px-3 py-2">Receipts</button>
+              <span class="text-[10px] uppercase font-bold text-slate-400">Last 50 entries</span>
+            </div>
           </div>
           <div class="p-4 grid grid-cols-1 gap-4 overflow-hidden h-[430px]">
             <div class="grid grid-cols-1 gap-3">
@@ -294,6 +297,29 @@
     </div>
   </div>
 
+  <div id="receiptModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[58]">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Receipt History</h2>
+          <div id="receiptModalCount" class="text-xs text-slate-500 mt-1">0 receipts</div>
+        </div>
+        <button id="closeReceiptBtn" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-[320px_1fr] min-h-[560px] overflow-hidden">
+        <div class="border-r border-slate-200 p-4 flex flex-col gap-3 overflow-hidden">
+          <input id="receiptSearch" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-shadow bg-white" placeholder="Search receipt or customer">
+          <div id="receiptList" class="overflow-y-auto space-y-2 pr-1"></div>
+        </div>
+        <div class="p-6 overflow-y-auto bg-slate-50">
+          <div id="receiptPreview" class="bg-white border border-slate-200 rounded-xl p-6 text-sm text-slate-900 whitespace-pre-line leading-7 min-h-full font-medium">Select a receipt to view invoice text.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="auditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[55]">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
       <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
@@ -349,6 +375,7 @@
       status:$("status"),bookCount:$("bookCount"),q:$("q"),dd:$("dd"),add:$("add"),sel:$("sel"),
       cart:$("cart"),sub:$("sub"),tier:$("tier"),disc:$("disc"),tot:$("tot"),clear:$("clear"),pdf:$("pdf"),
       history:$("history"),historyCount:$("historyCount"),ledgerSummary:$("ledgerSummary"),ledgerSearch:$("ledgerSearch"),txDetail:$("txDetail"),cn:$("cn"),cp:$("cp"),ce:$("ce"),ca:$("ca"),cz:$("cz"),cerr:$("cerr"),
+      receiptBtn:$("receiptBtn"),receiptModal:$("receiptModal"),closeReceiptBtn:$("closeReceiptBtn"),receiptSearch:$("receiptSearch"),receiptList:$("receiptList"),receiptPreview:$("receiptPreview"),receiptModalCount:$("receiptModalCount"),
       auditBtn:$("auditBtn"),auditModal:$("auditModal"),closeAuditBtn:$("closeAuditBtn"),resyncAuditSheetBtn:$("resyncAuditSheetBtn"),retryAuditSyncBtn:$("retryAuditSyncBtn"),auditCheckedAt:$("auditCheckedAt"),auditBanner:$("auditBanner"),auditSummary:$("auditSummary"),auditChecks:$("auditChecks"),auditLogs:$("auditLogs"),
       stockBtn:$("stockBtn"),stockModal:$("stockModal"),closeStockBtn:$("closeStockBtn"),
       stockSearch:$("stockSearch"),stockBody:$("stockBody"),stockSummary:$("stockSummary"),
@@ -637,6 +664,64 @@
             <div class="mt-1 text-sm font-semibold text-slate-800">${tx.items || 0}</div>
           </div>
         </div>`;
+    }
+
+    function buildPersonalReceiptText(tx){
+      if(!tx) return "Select a receipt to view invoice text.";
+      const customer = tx.customer || {};
+      const items = Array.isArray(tx.lines) ? tx.lines : [];
+      const itemLines = items.map((item, index)=>`${index + 1}. ${item.title} - Qty: ${item.qty}`).join("\n\n");
+      return [
+        `Name - ${customer.name || "-"}`,
+        "",
+        `Address - ${[customer.address, customer.pincode].filter(Boolean).join(" - ") || "-"}`,
+        "",
+        `Mob No - ${customer.phone || "-"}`,
+        "",
+        "",
+        "ITI Trade Hindi Books -",
+        "",
+        "",
+        itemLines || "No books listed.",
+        "",
+        "",
+        `Final Amount Payable: Rs ${Number(tx.total || 0).toFixed(2)}`,
+        "",
+        "",
+        "Warehouse - Lucknow",
+        "",
+        "Note - Payment Completed only invoice required"
+      ].join("\n");
+    }
+
+    function drawReceiptModal(){
+      const query = String(el.receiptSearch?.value || "").trim().toLowerCase();
+      const list = s.tx.filter(tx=>{
+        if(!query) return true;
+        return String(tx.no || "").toLowerCase().includes(query) || String(tx.customer?.name || "").toLowerCase().includes(query);
+      });
+      el.receiptModalCount.textContent = `${list.length} receipt${list.length===1?"":"s"}`;
+      if(!list.length){
+        el.receiptList.innerHTML = '<div class="text-sm text-slate-500 italic p-4 text-center">No receipts found.</div>';
+        el.receiptPreview.textContent = "Select a receipt to view invoice text.";
+        return;
+      }
+      el.receiptList.innerHTML = "";
+      list.forEach(tx=>{
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = `w-full text-left rounded-xl border p-3 transition-colors ${s.selectedTxNo===tx.no?"bg-brand-50 border-brand-200":"bg-white border-slate-200 hover:bg-slate-50"}`;
+        card.innerHTML = `<div class="font-mono text-xs font-bold text-slate-900">${tx.no}</div><div class="mt-1 text-xs text-slate-500">${tx.date}</div><div class="mt-2 flex justify-between gap-3"><span class="text-sm font-semibold text-slate-700 truncate">${tx.customer?.name || "-"}</span><span class="text-sm font-bold text-brand-600">${fmt(tx.total)}</span></div>`;
+        card.onclick = () => {
+          s.selectedTxNo = tx.no;
+          el.receiptPreview.textContent = buildPersonalReceiptText(tx);
+          drawReceiptModal();
+        };
+        el.receiptList.appendChild(card);
+      });
+      const active = list.find(tx=>tx.no===s.selectedTxNo) || list[0];
+      s.selectedTxNo = active.no;
+      el.receiptPreview.textContent = buildPersonalReceiptText(active);
     }
 
     async function loadAuditDashboard(){
@@ -1002,6 +1087,15 @@
 
       [el.cn,el.cp,el.ce,el.ca,el.cz].forEach(i=>i.addEventListener("input",persistCustomer));
       el.ledgerSearch.oninput=drawHistory;
+      el.receiptBtn.onclick=()=>{
+        el.receiptModal.classList.remove("hidden");
+        el.receiptModal.classList.add("flex");
+        el.receiptSearch.value="";
+        drawReceiptModal();
+      };
+      el.closeReceiptBtn.onclick=()=>{ el.receiptModal.classList.add("hidden"); el.receiptModal.classList.remove("flex"); };
+      el.receiptModal.onclick=e=>{ if(e.target===el.receiptModal){ el.receiptModal.classList.add("hidden"); el.receiptModal.classList.remove("flex"); } };
+      el.receiptSearch.oninput=drawReceiptModal;
 
       el.auditBtn.onclick=async ()=>{
         el.auditModal.classList.remove("hidden");

@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Book = require("../models/Book");
 const Sale = require("../models/Sale");
 const { writeAuditLog } = require("../utils/auditLogger");
-const { syncAuditLogsToGoogleSheet } = require("../utils/googleSheetSync");
+const { syncAuditLogsToGoogleSheet, syncSalesToGoogleSheet } = require("../utils/googleSheetSync");
 
 function parseNumber(value, fallback = 0) {
   const num = Number(value);
@@ -282,6 +282,9 @@ async function completeSale(req, res, next) {
 
     syncAuditLogsToGoogleSheet(auditLogsToSync).catch((error) => {
       console.error("Google Sheet sync failed:", error.message);
+    });
+    syncSalesToGoogleSheet([savedSale]).catch((error) => {
+      console.error("Google Sheet sale ledger sync failed:", error.message);
     });
 
     return res.status(201).json({ sale: mapSale(savedSale) });
