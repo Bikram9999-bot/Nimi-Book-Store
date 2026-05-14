@@ -40,6 +40,14 @@ var RECEIPT_HEADERS = [
   "Note"
 ];
 
+function getTargetSpreadsheet() {
+  var activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  if (activeSpreadsheet) {
+    return activeSpreadsheet;
+  }
+  return SpreadsheetApp.openById(SHEET_ID);
+}
+
 function styleSheet(sheet, headers, color, rangeA1) {
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   sheet.setFrozenRows(1);
@@ -156,9 +164,17 @@ function refreshFilters(sheet, headers) {
   sheet.getRange(1, 1, lastRow, headers.length).createFilter();
 }
 
+function setupSheets() {
+  var spreadsheet = getTargetSpreadsheet();
+  var auditSheet = ensureAuditSheet(spreadsheet);
+  var receiptSheet = ensureReceiptSheet(spreadsheet);
+  refreshFilters(auditSheet, AUDIT_HEADERS);
+  refreshFilters(receiptSheet, RECEIPT_HEADERS);
+}
+
 function doPost(e) {
   try {
-    var spreadsheet = SpreadsheetApp.openById(SHEET_ID);
+    var spreadsheet = getTargetSpreadsheet();
     var payload = JSON.parse(e.postData.contents || "{}");
     var mode = payload.mode || "append";
     var rows = Array.isArray(payload.rows) ? payload.rows : [];
