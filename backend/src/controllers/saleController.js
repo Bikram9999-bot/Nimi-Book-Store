@@ -4,6 +4,10 @@ const Sale = require("../models/Sale");
 const { writeAuditLog } = require("../utils/auditLogger");
 const { syncAuditLogsToGoogleSheet, syncSalesToGoogleSheet } = require("../utils/googleSheetSync");
 
+function escapeRegExp(string) {
+  return String(string).replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+}
+
 function parseNumber(value, fallback = 0) {
   const num = Number(value);
   return Number.isFinite(num) ? num : fallback;
@@ -210,6 +214,43 @@ async function completeSale(req, res, next) {
       return res.status(400).json({ error: validationError });
     }
     sale.lines = await resolveSaleLines(sale.lines);
+
+    // Quick duplicate detection: if a very recent sale (by same customer name,
+    // same itemCount & total and identical lines) exists within a short time
+    // window, treat this request as a duplicate and return the existing sale.
+    try {
+      const WINDOW_MS = 60 * 1000; // 1 minute
+      const since = new Date(Date.now() - WINDOW_MS);
+      const nameRegex = sale.customer.name ? new RegExp(`^${escapeRegExp(String(sale.customer.name).trim())}$`, "i") : null;
+      if (nameRegex) {
+        const candidates = await Sale.find({
+          "customer.name": { $regex: nameRegex },
+          itemCount: sale.itemCount,
+          total: sale.total,
+          createdAt: { $gte: since }
+        }).sort({ createdAt: -1 }).limit(10);
+
+        const sameLines = (aLines, bLines) => {
+          if (!Array.isArray(aLines) || !Array.isArray(bLines)) return false;
+          if (aLines.length !== bLines.length) return false;
+          const mapA = new Map(aLines.map(l => [String(l.bookId), Number(l.qty)]));
+          for (const bl of bLines) {
+            const want = mapA.get(String(bl.bookId));
+            if (typeof want === "undefined" || Number(bl.qty) !== want) return false;
+          }
+          return true;
+        };
+
+        for (const cand of candidates) {
+          if (sameLines(cand.lines, sale.lines) && String((cand.customer && cand.customer.name) || "").trim().toLowerCase() === String((sale.customer && sale.customer.name) || "").trim().toLowerCase()) {
+            return res.status(200).json({ sale: mapSale(cand), duplicate: true });
+          }
+        }
+      }
+    } catch (dupErr) {
+      // If duplicate-check fails for any reason, continue with normal flow.
+      console.warn("Duplicate detection failed:", dupErr && dupErr.message);
+    }
 
     const existing = await Sale.findOne({ receiptNo: sale.receiptNo });
     if (existing) {

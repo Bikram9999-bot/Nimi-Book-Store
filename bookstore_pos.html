@@ -987,8 +987,51 @@
       el.stockSummary.textContent=`${rows.length} records`;
     }
 
-    function buildEmailText(tx,t){ const lines=tx.lines.map(i=>`- ${i.title} | Price: ${fmt(i.price)} | Qty: ${i.qty} | Amount: ${fmt(i.amount)}`); return ["Dear "+s.c.name,"","Thank you for your purchase from our bookstore.",`Receipt No: ${tx.no}`,`Date: ${tx.date}`,"","Purchased Items:",...lines,"",`Subtotal: ${fmt(t.sub)}`,`Discount (${Math.round(t.r*100)}%): ${fmt(t.d)}`,`Grand Total: ${fmt(t.t)}`,"","Thank you."].join("\n"); }
-    async function sendReceiptEmail(tx,t){ const body=buildEmailText(tx,t),subject=`Thank you for your purchase | ${tx.no}`; if(EMAILJS_CONFIG.enabled && window.emailjs){ emailjs.init({publicKey:EMAILJS_CONFIG.publicKey}); const p={};p[EMAILJS_CONFIG.vars.to]=s.c.email;p[EMAILJS_CONFIG.vars.cc]=OWNER_EMAIL;p[EMAILJS_CONFIG.vars.subject]=subject;p[EMAILJS_CONFIG.vars.body]=body;p[EMAILJS_CONFIG.vars.customer]=s.c.name;p[EMAILJS_CONFIG.vars.receipt]=tx.no; await emailjs.send(EMAILJS_CONFIG.serviceId,EMAILJS_CONFIG.templateId,p); return; } window.location.href=`mailto:${s.c.email},${OWNER_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`; }
+    function buildEmailText(tx,t){
+      const customer=tx.customer || s.c || {};
+      const lines=tx.lines.map((i,idx)=>[
+        `${idx+1}. ${i.title}`,
+        `   Unit Price : ${fmt(i.price)}`,
+        `   Quantity   : ${i.qty}`,
+        `   Line Total : ${fmt(i.amount)}`
+      ].join("\n"));
+      return [
+        `Dear ${customer.name || "Customer"},`,
+        "",
+        "Thank you for your purchase from Nimi Lucknow.",
+        "",
+        "PURCHASE DETAILS",
+        "------------------------------",
+        `Receipt No   : ${tx.no}`,
+        `Purchase Date: ${tx.date}`,
+        `Total Books  : ${tx.items}`,
+        "",
+        "CUSTOMER DETAILS",
+        "------------------------------",
+        `Name    : ${customer.name || "-"}`,
+        `Phone   : ${customer.phone || "-"}`,
+        `Email   : ${customer.email || "-"}`,
+        `Address : ${customer.address || "-"}`,
+        `Pincode : ${customer.pincode || "-"}`,
+        "",
+        "ITEMS PURCHASED",
+        "------------------------------",
+        ...lines,
+        "",
+        "PAYMENT SUMMARY",
+        "------------------------------",
+        `Subtotal        : ${fmt(t.sub)}`,
+        `Discount Rate   : ${Math.round(t.r*100)}%`,
+        `Discount Amount : ${fmt(t.d)}`,
+        `Grand Total     : ${fmt(t.t)}`,
+        "",
+        "If you have any questions about this purchase, please reply to this email.",
+        "",
+        "Thank you,",
+        "Nimi Lucknow"
+      ].join("\n");
+    }
+    async function sendReceiptEmail(tx,t){ const customer=tx.customer || s.c || {}; const body=buildEmailText(tx,t),subject=`Purchase Receipt ${tx.no} | Nimi Lucknow`; if(EMAILJS_CONFIG.enabled && window.emailjs){ emailjs.init({publicKey:EMAILJS_CONFIG.publicKey}); const p={};p[EMAILJS_CONFIG.vars.to]=customer.email;p[EMAILJS_CONFIG.vars.cc]=OWNER_EMAIL;p[EMAILJS_CONFIG.vars.subject]=subject;p[EMAILJS_CONFIG.vars.body]=body;p[EMAILJS_CONFIG.vars.customer]=customer.name || "";p[EMAILJS_CONFIG.vars.receipt]=tx.no; await emailjs.send(EMAILJS_CONFIG.serviceId,EMAILJS_CONFIG.templateId,p); return; } window.location.href=`mailto:${customer.email},${OWNER_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`; }
 
     function pdf(tx,t){
       const {jsPDF}=window.jspdf,doc=new jsPDF();let y=14;
@@ -1001,12 +1044,15 @@
 
     async function checkout(){
       if(!s.cart.length){alert("Action Required: Please add at least one item to the cart.");return;}
+      // Prevent duplicate clicks: disable the Process Transaction button until finished
+      el.pdf.disabled = true;
       persistCustomer(); const ce=vCust(s.c);
       if(ce){el.cerr.textContent=ce;alert(`Validation Error: ${ce}`);return;}
       try{
         await refreshBooksFromApi();
       }catch(_){
         alert("Backend not reachable. Please try again.");
+        el.pdf.disabled = false;
         return;
       }
       const stockIssues=validateStock(s.cart);
@@ -1035,12 +1081,15 @@
         await refreshBooksFromApi();
       }catch(err){
         alert(`Purchase save failed: ${err.message}`);
+        el.pdf.disabled = false;
         return;
       }
       pdf(tx,t);
       try{await sendReceiptEmail(tx,t);}catch(_){console.warn("Email execution skipped/failed.");}
       try{await loadAuditDashboard();}catch(_){}
       s.cart=[]; drawCart(); alert("Transaction Successful. Receipt Generated and Inventory Updated.");
+      // Re-enable after flow completes
+      el.pdf.disabled = false;
     }
 
     function showLogin(){ el.appRoot.classList.add("hidden"); el.loginScreen.style.display="flex"; el.loginPassword.value=""; el.loginError.textContent=""; el.loginPassword.focus(); }
