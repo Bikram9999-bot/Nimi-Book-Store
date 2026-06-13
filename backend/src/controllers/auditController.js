@@ -245,4 +245,23 @@ async function resyncAllAuditSheet(req, res, next) {
   }
 }
 
-module.exports = { getAuditReport, getAuditLogs, retryAuditSheetSync, resyncAllAuditSheet };
+async function clearAllData(req, res, next) {
+  try {
+    const [booksCleared, auditCleared, salesCleared] = await Promise.all([
+      Book.updateMany({}, { $set: { stock: 0 } }),
+      AuditLog.deleteMany({}),
+      Sale.deleteMany({})
+    ]);
+
+    return res.status(200).json({
+      message: "All data cleared successfully.",
+      booksReset: booksCleared.modifiedCount,
+      auditLogsDeleted: auditCleared.deletedCount,
+      salesDeleted: salesCleared.deletedCount
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { getAuditReport, getAuditLogs, retryAuditSheetSync, resyncAllAuditSheet, clearAllData };

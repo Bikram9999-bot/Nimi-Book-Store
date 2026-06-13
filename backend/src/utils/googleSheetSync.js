@@ -50,26 +50,19 @@ function toSaleSheetPayload(sale) {
   const saleDate = sale.saleDate || sale.createdAt || new Date();
   const date = new Date(saleDate);
   const lines = Array.isArray(sale.lines) ? sale.lines : [];
-  const customer = sale.customer || {};
 
-  return {
-    date: date.toLocaleDateString("en-CA"),
-    time: date.toLocaleTimeString("en-IN", { hour12: true }),
-    receiptNo: sale.receiptNo || "",
-    customerName: customer.name || "",
-    phone: customer.phone || "",
-    email: customer.email || "",
-    address: [customer.address, customer.pincode].filter(Boolean).join(" - "),
-    books: lines.map((line, index) => `${index + 1}. ${line.title}`).join("\n"),
-    quantities: lines.map((line, index) => `${index + 1}. Qty: ${line.qty}`).join("\n"),
-    itemCount: Number(sale.itemCount) || lines.reduce((sum, line) => sum + (Number(line.qty) || 0), 0),
-    subtotal: Number(sale.subtotal) || 0,
-    discountPercent: Number(sale.discountPercent) || 0,
-    discountAmount: Number(sale.discountAmount) || 0,
-    total: Number(sale.total) || 0,
-    warehouse: "Lucknow",
-    note: "Payment Completed only invoice required"
-  };
+  return lines.length
+    ? lines.map((line) => ({
+        timestamp: date.toISOString(),
+        date: date.toLocaleDateString("en-CA"),
+        time: date.toLocaleTimeString("en-IN", { hour12: true }),
+        bookTitle: line.title || "",
+        copiesSold: Number(line.qty) || 0,
+        receiptNo: sale.receiptNo || "",
+        saleTotal: Number(sale.total) || 0,
+        warehouse: "Lucknow"
+      }))
+    : [];
 }
 
 async function markLogs(ids, status, extra = {}) {
@@ -125,19 +118,52 @@ async function syncAuditLogsToGoogleSheet(logs = [], options = {}) {
   }
 }
 
-async function syncSalesToGoogleSheet(sales = []) {
+async function syncSalesToGoogleSheet(sales = [], auditLogs = []) {
   const normalized = sales.filter(Boolean);
   if (!normalized.length) return { synced: 0, skipped: 0 };
   if (!isGoogleSheetSyncEnabled()) {
     return { synced: 0, skipped: normalized.length };
   }
 
+  const logs = Array.isArray(auditLogs) && auditLogs.length
+    ? auditLogs
+    : await AuditLog.find({ source: "pos", reference: { $in: normalized.map(s => s.receiptNo) } }).lean();
+
+  const logsByRef = new Map();
+  logs.forEach(log => {
+    const ref = log.reference;
+    if (!logsByRef.has(ref)) logsByRef.set(ref, []);
+    logsByRef.get(ref).push(log);
+  });
+
+  const saleRows = normalized.flatMap(sale => {
+    const lineLogs = logsByRef.get(sale.receiptNo) || [];
+    const logsByTitle = new Map();
+    lineLogs.forEach(log => {
+      if (!logsByTitle.has(log.title)) logsByTitle.set(log.title, log);
+    });
+
+    return (sale.lines || []).map((line, idx) => ({
+      timestamp: new Date(sale.saleDate || sale.createdAt).toISOString(),
+      date: new Date(sale.saleDate || sale.createdAt).toLocaleDateString("en-CA"),
+      time: new Date(sale.saleDate || sale.createdAt).toLocaleTimeString("en-IN", { hour12: true }),
+      bookTitle: line.title || "",
+      copiesSold: Number(line.qty) || 0,
+      remainingStock: logsByTitle.get(line.title)?.after?.stock ?? 0,
+      receiptNo: sale.receiptNo || "",
+      saleTotal: Number(sale.total) || 0,
+      warehouse: "Lucknow"
+    }));
+  });
+
+  if (!saleRows.length) return { synced: 0, skipped: 0 };
+
   const response = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       mode: "append",
-      saleRows: normalized.map(toSaleSheetPayload)
+      saleRows
     })
   });
 
@@ -150,7 +176,7 @@ async function syncSalesToGoogleSheet(sales = []) {
     throw new Error(result?.error || "Google Sheet webhook did not confirm success");
   }
 
-  return { synced: normalized.length, skipped: 0 };
+  return { synced: saleRows.length, skipped: 0 };
 }
 
 async function retryUnsyncedAuditLogs(options = {}) {

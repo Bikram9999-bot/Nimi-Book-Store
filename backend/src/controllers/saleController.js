@@ -324,7 +324,7 @@ async function completeSale(req, res, next) {
     syncAuditLogsToGoogleSheet(auditLogsToSync).catch((error) => {
       console.error("Google Sheet sync failed:", error.message);
     });
-    syncSalesToGoogleSheet([savedSale]).catch((error) => {
+    syncSalesToGoogleSheet([savedSale], auditLogsToSync).catch((error) => {
       console.error("Google Sheet sale ledger sync failed:", error.message);
     });
 
