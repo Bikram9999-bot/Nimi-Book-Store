@@ -402,6 +402,16 @@ async function completeSale(req, res, next) {
       }
     })();
 
+    // Fire-and-forget SMTP sale receipt email notification
+    (async () => {
+      try {
+        const { sendSaleEmail } = require("../utils/emailNotifier");
+        await sendSaleEmail(savedSale);
+      } catch (err) {
+        console.error("Asynchronous sale email notification failed:", err.message);
+      }
+    })();
+
     return res.status(201).json({ sale: mapSale(savedSale) });
   } catch (err) {
     if (err && err.code === 11000) {
