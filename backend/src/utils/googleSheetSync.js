@@ -8,19 +8,22 @@ function isGoogleSheetSyncEnabled() {
 }
 
 function formatSheetDate(dateObj) {
-  const d = new Date(dateObj);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
+  return new Date(dateObj).toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).replaceAll("-", "/");
 }
 
 function formatSheetTime(dateObj) {
-  const d = new Date(dateObj);
-  const hrs = String(d.getHours()).padStart(2, '0');
-  const mins = String(d.getMinutes()).padStart(2, '0');
-  const secs = String(d.getSeconds()).padStart(2, '0');
-  return `${hrs}:${mins}:${secs}`;
+  return new Date(dateObj).toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
 }
 
 function toSheetPayload(log) {
@@ -173,8 +176,8 @@ async function syncSalesToGoogleSheet(sales = [], auditLogs = []) {
 
     return (sale.lines || []).map((line, idx) => ({
       timestamp: new Date(sale.saleDate || sale.createdAt).toISOString(),
-      date: new Date(sale.saleDate || sale.createdAt).toLocaleDateString("en-CA"),
-      time: new Date(sale.saleDate || sale.createdAt).toLocaleTimeString("en-IN", { hour12: true }),
+      date: new Date(sale.saleDate || sale.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }),
+      time: new Date(sale.saleDate || sale.createdAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour12: true }),
       bookTitle: line.title || "",
       copiesSold: Number(line.qty) || 0,
       remainingStock: logsByTitle.get(line.title)?.after?.stock ?? 0,

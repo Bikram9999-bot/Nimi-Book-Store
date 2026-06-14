@@ -1,4 +1,4 @@
-var SHEET_ID = "1d12LSaoSjsM0I54RLjKgktHcZ9jpIcz_O51Y6m6B5Y0";
+var SHEET_ID = "YOUR_NEW_GOOGLE_SHEET_ID_HERE";
 
 var AUDIT_SHEET_NAME = "Inventory Audit";
 var RECEIPT_SHEET_NAME = "Receipt Ledger";
