@@ -7,6 +7,22 @@ function isGoogleSheetSyncEnabled() {
   return Boolean(GOOGLE_SHEET_WEBHOOK_URL);
 }
 
+function formatSheetDate(dateObj) {
+  const d = new Date(dateObj);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+function formatSheetTime(dateObj) {
+  const d = new Date(dateObj);
+  const hrs = String(d.getHours()).padStart(2, '0');
+  const mins = String(d.getMinutes()).padStart(2, '0');
+  const secs = String(d.getSeconds()).padStart(2, '0');
+  return `${hrs}:${mins}:${secs}`;
+}
+
 function toSheetPayload(log) {
   const beforeStock = Number(log.before?.stock) || 0;
   const afterStock = Number(log.after?.stock) || 0;
@@ -17,27 +33,31 @@ function toSheetPayload(log) {
   const timestamp = log.createdAt || new Date().toISOString();
   const eventType = String(log.eventType || "");
   const eventLabelMap = {
+    SALE: "SALE",
     inventory_sale_adjustment: "Sale Deduction",
     inventory_manual_update: "Manual Stock Edit",
     book_created: "Book Created",
     book_deleted: "Book Deleted"
   };
 
+  const isSale = eventType === "SALE" || eventType === "inventory_sale_adjustment";
+  const stockMovement = isSale ? `${deltaStock} (Sale)` : `${beforeStock} -> ${afterStock} (${deltaStock >= 0 ? "+" : ""}${deltaStock})`;
+
   return {
     timestamp,
-    date: new Date(timestamp).toLocaleDateString("en-CA"),
-    time: new Date(timestamp).toLocaleTimeString("en-IN", { hour12: true }),
+    date: formatSheetDate(timestamp),
+    time: formatSheetTime(timestamp),
     eventType,
     eventLabel: eventLabelMap[eventType] || eventType.replaceAll("_", " "),
     source: log.source || "",
     reference: log.reference || "",
     serialNo: Number(log.serialNo) || 0,
     title: log.title || "",
-    bookDisplay: `${Number(log.serialNo) || 0} - ${log.title || ""}`.trim(),
+    bookDisplay: log.title || "",
     beforeStock,
     afterStock,
     deltaStock,
-    stockMovement: `${beforeStock} -> ${afterStock} (${deltaStock >= 0 ? "+" : ""}${deltaStock})`,
+    stockMovement,
     previousStock,
     price,
     status,
@@ -48,21 +68,29 @@ function toSheetPayload(log) {
 
 function toSaleSheetPayload(sale) {
   const saleDate = sale.saleDate || sale.createdAt || new Date();
-  const date = new Date(saleDate);
   const lines = Array.isArray(sale.lines) ? sale.lines : [];
 
-  return lines.length
-    ? lines.map((line) => ({
-        timestamp: date.toISOString(),
-        date: date.toLocaleDateString("en-CA"),
-        time: date.toLocaleTimeString("en-IN", { hour12: true }),
-        bookTitle: line.title || "",
-        copiesSold: Number(line.qty) || 0,
-        receiptNo: sale.receiptNo || "",
-        saleTotal: Number(sale.total) || 0,
-        warehouse: "Lucknow"
-      }))
-    : [];
+  const booksStr = lines.map(line => line.title || "").join(" | ");
+  const quantitiesStr = lines.map(line => line.qty || 0).join(" | ");
+
+  return {
+    date: formatSheetDate(saleDate),
+    time: formatSheetTime(saleDate),
+    receiptNo: sale.receiptNo || "",
+    customerName: sale.customer?.name || "",
+    phone: sale.customer?.phone || "",
+    email: sale.customer?.email || "",
+    address: [sale.customer?.address, sale.customer?.pincode].filter(Boolean).join(", "),
+    books: booksStr,
+    quantities: quantitiesStr,
+    itemCount: Number(sale.itemCount) || 0,
+    subtotal: Number(sale.subtotal) || 0,
+    discountPercent: Number(sale.discountPercent) || 0,
+    discountAmount: Number(sale.discountAmount) || 0,
+    total: Number(sale.total) || 0,
+    warehouse: "Lucknow",
+    note: "Payment Completed only invoice required"
+  };
 }
 
 async function markLogs(ids, status, extra = {}) {
@@ -193,7 +221,12 @@ async function retryUnsyncedAuditLogs(options = {}) {
     return { retried: 0, synced: 0, skipped: 0 };
   }
 
-  const result = await syncAuditLogsToGoogleSheet(logs);
+  const receiptNos = [...new Set(logs.map(log => log.reference).filter(Boolean))];
+  const sales = receiptNos.length
+    ? await Sale.find({ receiptNo: { $in: receiptNos } })
+    : [];
+
+  const result = await syncAuditLogsToGoogleSheet(logs, { sales });
   return {
     retried: logs.length,
     synced: result.synced || 0,
@@ -225,5 +258,7 @@ module.exports = {
   syncAuditLogsToGoogleSheet,
   syncSalesToGoogleSheet,
   retryUnsyncedAuditLogs,
-  rebuildGoogleSheetFromAuditLogs
+  rebuildGoogleSheetFromAuditLogs,
+  toSheetPayload,
+  toSaleSheetPayload
 };

@@ -31,7 +31,9 @@ function normalizeLines(lines = []) {
       title: String(line.title || "").trim(),
       price: parseNumber(line.price),
       qty: parseNumber(line.qty),
-      amount: parseNumber(line.amount)
+      amount: parseNumber(line.amount),
+      stockBefore: line.stockBefore !== undefined ? parseNumber(line.stockBefore) : null,
+      stockAfter: line.stockAfter !== undefined ? parseNumber(line.stockAfter) : null
     }))
     .filter((line) => line.bookId && line.title && line.qty > 0);
 }
@@ -96,7 +98,9 @@ async function resolveSaleLines(lines = []) {
       title: line.title,
       price: line.price,
       qty: line.qty,
-      amount: line.amount
+      amount: line.amount,
+      stockBefore: line.stockBefore,
+      stockAfter: line.stockAfter
     });
   }
   return resolved;
@@ -118,7 +122,9 @@ function mapSale(sale) {
       title: line.title,
       price: line.price,
       qty: line.qty,
-      amount: line.amount
+      amount: line.amount,
+      stockBefore: line.stockBefore,
+      stockAfter: line.stockAfter
     })),
     source: sale.source,
     createdAt: sale.createdAt,
@@ -205,6 +211,18 @@ async function importSales(req, res, next) {
 }
 
 async function completeSale(req, res, next) {
+  try {
+    const receiptNo = String(req.body.receiptNo || req.body.no || "").trim();
+    if (receiptNo) {
+      const existing = await Sale.findOne({ receiptNo });
+      if (existing) {
+        return res.status(200).json({ sale: mapSale(existing), duplicate: true });
+      }
+    }
+  } catch (dupCheckErr) {
+    console.warn("Idempotency check failed:", dupCheckErr.message);
+  }
+
   const session = await mongoose.startSession();
 
   try {
@@ -278,7 +296,7 @@ async function completeSale(req, res, next) {
           throw stockError;
         }
         const auditLog = await writeAuditLog({
-          eventType: "inventory_sale_adjustment",
+          eventType: "SALE",
           source: sale.source || "pos",
           reference: sale.receiptNo,
           message: `Sale completed for ${line.qty} unit(s).`,
@@ -311,7 +329,9 @@ async function completeSale(req, res, next) {
               title: line.title,
               price: line.price,
               qty: line.qty,
-              amount: line.amount
+              amount: line.amount,
+              stockBefore: line.stockBefore,
+              stockAfter: line.stockAfter
             })),
             source: sale.source || "pos"
           }
@@ -321,12 +341,66 @@ async function completeSale(req, res, next) {
       savedSale = created[0];
     });
 
-    syncAuditLogsToGoogleSheet(auditLogsToSync).catch((error) => {
-      console.error("Google Sheet sync failed:", error.message);
-    });
-    syncSalesToGoogleSheet([savedSale], auditLogsToSync).catch((error) => {
-      console.error("Google Sheet sale ledger sync failed:", error.message);
-    });
+    // Fire-and-forget Google Sheet webhook payload sync
+    const { toSheetPayload, toSaleSheetPayload } = require("../utils/googleSheetSync");
+    const sheetPayload = {
+      mode: "append",
+      rows: auditLogsToSync.map(toSheetPayload),
+      saleRows: [toSaleSheetPayload(savedSale)]
+    };
+
+    (async () => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout
+        const response = await fetch(process.env.GOOGLE_SHEET_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sheetPayload),
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+          throw new Error(`Sheet webhook returned ${response.status}`);
+        }
+        const result = await response.json().catch(() => null);
+        if (!result || result.ok !== true) {
+          throw new Error(result?.error || "Webhook did not confirm success");
+        }
+
+        // Update audit log sheetSyncStatus to "synced"
+        const ids = auditLogsToSync.map(log => log._id).filter(Boolean);
+        if (ids.length) {
+          const AuditLog = require("../models/AuditLog");
+          await AuditLog.updateMany(
+            { _id: { $in: ids } },
+            {
+              $set: {
+                sheetSyncStatus: "synced",
+                sheetSyncedAt: new Date()
+              }
+            }
+          );
+        }
+      } catch (err) {
+        console.error("Google Sheet webhook async sync failed:", err.message);
+        // Update audit log sheetSyncStatus to "failed", store err.message in sheetSyncError
+        const ids = auditLogsToSync.map(log => log._id).filter(Boolean);
+        if (ids.length) {
+          const AuditLog = require("../models/AuditLog");
+          await AuditLog.updateMany(
+            { _id: { $in: ids } },
+            {
+              $set: {
+                sheetSyncStatus: "failed",
+                sheetSyncError: String(err.message || "Webhook sync failed").slice(0, 500)
+              }
+            }
+          );
+        }
+      }
+    })();
 
     return res.status(201).json({ sale: mapSale(savedSale) });
   } catch (err) {

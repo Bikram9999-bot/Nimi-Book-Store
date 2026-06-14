@@ -6,7 +6,9 @@ const saleLineSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
     qty: { type: Number, required: true, min: 1 },
-    amount: { type: Number, required: true, min: 0 }
+    amount: { type: Number, required: true, min: 0 },
+    stockBefore: { type: Number, default: null },
+    stockAfter: { type: Number, default: null }
   },
   { _id: false }
 );

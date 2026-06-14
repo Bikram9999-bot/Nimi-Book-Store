@@ -98,7 +98,21 @@ function resetAuditSheet(sheet) {
 }
 
 function appendAuditRows(sheet, rows) {
+  var lastRow = sheet.getLastRow();
+  var existingSyncIds = [];
+  if (lastRow > 1) {
+    var values = sheet.getRange(2, 15, lastRow - 1, 1).getValues();
+    existingSyncIds = values.map(function (r) {
+      return String(r[0]);
+    });
+  }
+
+  var addedCount = 0;
   rows.forEach(function (row) {
+    var syncId = String(row.syncId || "");
+    if (syncId && existingSyncIds.indexOf(syncId) !== -1) {
+      return; // Skip duplicate Sync ID
+    }
     sheet.appendRow([
       row.date || "",
       row.time || "",
@@ -116,17 +130,32 @@ function appendAuditRows(sheet, rows) {
       row.message || "",
       row.syncId || ""
     ]);
+    addedCount++;
   });
 
-  if (rows.length) {
-    var startRow = sheet.getLastRow() - rows.length + 1;
-    sheet.getRange(startRow, 7, rows.length, 4).setNumberFormat("0");
-    sheet.getRange(startRow, 10, rows.length, 1).setNumberFormat("Rs #,##0.00");
+  if (addedCount > 0) {
+    var startRow = sheet.getLastRow() - addedCount + 1;
+    sheet.getRange(startRow, 7, addedCount, 4).setNumberFormat("0");
+    sheet.getRange(startRow, 10, addedCount, 1).setNumberFormat("Rs #,##0.00");
   }
 }
 
 function appendReceiptRows(sheet, saleRows) {
+  var lastRow = sheet.getLastRow();
+  var existingReceiptNos = [];
+  if (lastRow > 1) {
+    var values = sheet.getRange(2, 3, lastRow - 1, 1).getValues();
+    existingReceiptNos = values.map(function (r) {
+      return String(r[0]);
+    });
+  }
+
+  var addedCount = 0;
   saleRows.forEach(function (row) {
+    var receiptNo = String(row.receiptNo || "");
+    if (receiptNo && existingReceiptNos.indexOf(receiptNo) !== -1) {
+      return; // Skip duplicate Receipt ID
+    }
     sheet.appendRow([
       row.date || "",
       row.time || "",
@@ -145,14 +174,15 @@ function appendReceiptRows(sheet, saleRows) {
       row.warehouse || "Lucknow",
       row.note || "Payment Completed only invoice required"
     ]);
+    addedCount++;
   });
 
-  if (saleRows.length) {
-    var startRow = sheet.getLastRow() - saleRows.length + 1;
-    sheet.getRange(startRow, 10, saleRows.length, 1).setNumberFormat("0");
-    sheet.getRange(startRow, 11, saleRows.length, 1).setNumberFormat("Rs #,##0.00");
-    sheet.getRange(startRow, 12, saleRows.length, 1).setNumberFormat("0");
-    sheet.getRange(startRow, 13, saleRows.length, 2).setNumberFormat("Rs #,##0.00");
+  if (addedCount > 0) {
+    var startRow = sheet.getLastRow() - addedCount + 1;
+    sheet.getRange(startRow, 10, addedCount, 1).setNumberFormat("0");
+    sheet.getRange(startRow, 11, addedCount, 1).setNumberFormat("Rs #,##0.00");
+    sheet.getRange(startRow, 12, addedCount, 1).setNumberFormat("0");
+    sheet.getRange(startRow, 13, addedCount, 2).setNumberFormat("Rs #,##0.00");
   }
 }
 
