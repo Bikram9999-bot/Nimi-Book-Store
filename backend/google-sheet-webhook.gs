@@ -1,4 +1,4 @@
-var SHEET_ID = "YOUR_NEW_GOOGLE_SHEET_ID_HERE";
+var SHEET_ID = "1QUFXuGmrH0hMkz9ujY1NGyFyrtzdNMJkKzhIp9HDh3c";
 
 var AUDIT_SHEET_NAME = "Inventory Audit";
 var RECEIPT_SHEET_NAME = "Receipt Ledger";
@@ -70,12 +70,12 @@ function ensureAuditSheet(spreadsheet) {
   var sheet = spreadsheet.getSheetByName(AUDIT_SHEET_NAME);
   if (!sheet) {
     sheet = spreadsheet.insertSheet(AUDIT_SHEET_NAME);
+    styleSheet(sheet, AUDIT_HEADERS, { background: "#dbeafe", text: "#1e3a8a" }, "A:O");
+    sheet.setColumnWidth(5, 320);
+    sheet.setColumnWidth(6, 170);
+    sheet.setColumnWidth(14, 320);
+    sheet.setColumnWidth(15, 220);
   }
-  styleSheet(sheet, AUDIT_HEADERS, { background: "#dbeafe", text: "#1e3a8a" }, "A:O");
-  sheet.setColumnWidth(5, 320);
-  sheet.setColumnWidth(6, 170);
-  sheet.setColumnWidth(14, 320);
-  sheet.setColumnWidth(15, 220);
   return sheet;
 }
 
@@ -83,18 +83,13 @@ function ensureReceiptSheet(spreadsheet) {
   var sheet = spreadsheet.getSheetByName(RECEIPT_SHEET_NAME);
   if (!sheet) {
     sheet = spreadsheet.insertSheet(RECEIPT_SHEET_NAME);
+    styleSheet(sheet, RECEIPT_HEADERS, { background: "#dcfce7", text: "#14532d" }, "A:P");
+    sheet.setColumnWidth(7, 300);
+    sheet.setColumnWidth(8, 380);
+    sheet.setColumnWidth(9, 160);
+    sheet.setColumnWidth(16, 280);
   }
-  styleSheet(sheet, RECEIPT_HEADERS, { background: "#dcfce7", text: "#14532d" }, "A:P");
-  sheet.setColumnWidth(7, 300);
-  sheet.setColumnWidth(8, 380);
-  sheet.setColumnWidth(9, 160);
-  sheet.setColumnWidth(16, 280);
   return sheet;
-}
-
-function resetAuditSheet(sheet) {
-  sheet.clear();
-  ensureAuditSheet(SpreadsheetApp.openById(SHEET_ID));
 }
 
 function appendAuditRows(sheet, rows) {
@@ -107,7 +102,6 @@ function appendAuditRows(sheet, rows) {
     });
   }
 
-  var addedCount = 0;
   rows.forEach(function (row) {
     var syncId = String(row.syncId || "");
     if (syncId && existingSyncIds.indexOf(syncId) !== -1) {
@@ -130,14 +124,7 @@ function appendAuditRows(sheet, rows) {
       row.message || "",
       row.syncId || ""
     ]);
-    addedCount++;
   });
-
-  if (addedCount > 0) {
-    var startRow = sheet.getLastRow() - addedCount + 1;
-    sheet.getRange(startRow, 7, addedCount, 4).setNumberFormat("0");
-    sheet.getRange(startRow, 10, addedCount, 1).setNumberFormat("Rs #,##0.00");
-  }
 }
 
 function appendReceiptRows(sheet, saleRows) {
@@ -150,7 +137,6 @@ function appendReceiptRows(sheet, saleRows) {
     });
   }
 
-  var addedCount = 0;
   saleRows.forEach(function (row) {
     var receiptNo = String(row.receiptNo || "");
     if (receiptNo && existingReceiptNos.indexOf(receiptNo) !== -1) {
@@ -174,32 +160,20 @@ function appendReceiptRows(sheet, saleRows) {
       row.warehouse || "Lucknow",
       row.note || "Payment Completed only invoice required"
     ]);
-    addedCount++;
   });
-
-  if (addedCount > 0) {
-    var startRow = sheet.getLastRow() - addedCount + 1;
-    sheet.getRange(startRow, 10, addedCount, 1).setNumberFormat("0");
-    sheet.getRange(startRow, 11, addedCount, 1).setNumberFormat("Rs #,##0.00");
-    sheet.getRange(startRow, 12, addedCount, 1).setNumberFormat("0");
-    sheet.getRange(startRow, 13, addedCount, 2).setNumberFormat("Rs #,##0.00");
-  }
-}
-
-function refreshFilters(sheet, headers) {
-  if (sheet.getFilter()) {
-    sheet.getFilter().remove();
-  }
-  var lastRow = Math.max(sheet.getLastRow(), 1);
-  sheet.getRange(1, 1, lastRow, headers.length).createFilter();
 }
 
 function setupSheets() {
   var spreadsheet = getTargetSpreadsheet();
-  var auditSheet = ensureAuditSheet(spreadsheet);
-  var receiptSheet = ensureReceiptSheet(spreadsheet);
-  refreshFilters(auditSheet, AUDIT_HEADERS);
-  refreshFilters(receiptSheet, RECEIPT_HEADERS);
+  
+  // Recreate the sheets to apply fresh style and filters
+  var oldAudit = spreadsheet.getSheetByName(AUDIT_SHEET_NAME);
+  if (oldAudit) spreadsheet.deleteSheet(oldAudit);
+  var oldReceipt = spreadsheet.getSheetByName(RECEIPT_SHEET_NAME);
+  if (oldReceipt) spreadsheet.deleteSheet(oldReceipt);
+  
+  ensureAuditSheet(spreadsheet);
+  ensureReceiptSheet(spreadsheet);
 }
 
 function doPost(e) {
@@ -210,24 +184,24 @@ function doPost(e) {
     var rows = Array.isArray(payload.rows) ? payload.rows : [];
     var saleRows = Array.isArray(payload.saleRows) ? payload.saleRows : [];
 
-    var auditSheet = ensureAuditSheet(spreadsheet);
     if (mode === "replace") {
-      auditSheet.clear();
-      auditSheet = ensureAuditSheet(spreadsheet);
-      var oldReceiptSheet = spreadsheet.getSheetByName(RECEIPT_SHEET_NAME);
-      if (oldReceiptSheet) {
-        oldReceiptSheet.clear();
-        ensureReceiptSheet(spreadsheet);
-      }
+      // Complete reset: delete the sheets so they are recreated and styled
+      var oldAudit = spreadsheet.getSheetByName(AUDIT_SHEET_NAME);
+      if (oldAudit) spreadsheet.deleteSheet(oldAudit);
+      var oldReceipt = spreadsheet.getSheetByName(RECEIPT_SHEET_NAME);
+      if (oldReceipt) spreadsheet.deleteSheet(oldReceipt);
     }
+
+    var auditSheet = ensureAuditSheet(spreadsheet);
     appendAuditRows(auditSheet, rows);
-    refreshFilters(auditSheet, AUDIT_HEADERS);
 
     if (saleRows.length) {
       var receiptSheet = ensureReceiptSheet(spreadsheet);
       appendReceiptRows(receiptSheet, saleRows);
-      refreshFilters(receiptSheet, RECEIPT_HEADERS);
     }
+
+    // Force flush to execute all writes synchronously inside the try-catch block!
+    SpreadsheetApp.flush();
 
     return ContentService
       .createTextOutput(JSON.stringify({ ok: true, rows: rows.length, saleRows: saleRows.length }))
