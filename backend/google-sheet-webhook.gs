@@ -166,6 +166,9 @@ function appendReceiptRows(sheet, saleRows) {
 function setupSheets() {
   var spreadsheet = getTargetSpreadsheet();
   
+  // Create a temporary sheet so the spreadsheet is never empty
+  var tempSheet = spreadsheet.insertSheet("TempSheet_Reset");
+  
   // Recreate the sheets to apply fresh style and filters
   var oldAudit = spreadsheet.getSheetByName(AUDIT_SHEET_NAME);
   if (oldAudit) spreadsheet.deleteSheet(oldAudit);
@@ -174,6 +177,9 @@ function setupSheets() {
   
   ensureAuditSheet(spreadsheet);
   ensureReceiptSheet(spreadsheet);
+  
+  // Delete the temp sheet
+  spreadsheet.deleteSheet(tempSheet);
 }
 
 function doPost(e) {
@@ -185,7 +191,9 @@ function doPost(e) {
     var saleRows = Array.isArray(payload.saleRows) ? payload.saleRows : [];
 
     if (mode === "replace") {
-      // Complete reset: delete the sheets so they are recreated and styled
+      // Create a temporary sheet so the spreadsheet is never empty during reset
+      spreadsheet.insertSheet("TempSheet_Reset");
+      
       var oldAudit = spreadsheet.getSheetByName(AUDIT_SHEET_NAME);
       if (oldAudit) spreadsheet.deleteSheet(oldAudit);
       var oldReceipt = spreadsheet.getSheetByName(RECEIPT_SHEET_NAME);
@@ -200,6 +208,12 @@ function doPost(e) {
       appendReceiptRows(receiptSheet, saleRows);
     }
 
+    // Clean up temporary sheet if it exists
+    var tempSheet = spreadsheet.getSheetByName("TempSheet_Reset");
+    if (tempSheet) {
+      spreadsheet.deleteSheet(tempSheet);
+    }
+
     // Force flush to execute all writes synchronously inside the try-catch block!
     SpreadsheetApp.flush();
 
@@ -207,6 +221,14 @@ function doPost(e) {
       .createTextOutput(JSON.stringify({ ok: true, rows: rows.length, saleRows: saleRows.length }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
+    // Make sure we clean up the temp sheet even if an error occurs
+    try {
+      var tempSheet = getTargetSpreadsheet().getSheetByName("TempSheet_Reset");
+      if (tempSheet) {
+        getTargetSpreadsheet().deleteSheet(tempSheet);
+      }
+    } catch(e) {}
+    
     return ContentService
       .createTextOutput(JSON.stringify({ ok: false, error: String(error) }))
       .setMimeType(ContentService.MimeType.JSON);
