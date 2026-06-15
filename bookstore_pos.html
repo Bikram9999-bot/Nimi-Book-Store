@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>NIMI Lucknow | Enterprise POS</title>
+  <title>NIMI Lucknow | Book Sales POS — National Instructional Media Institute</title>
+  <link rel="icon" type="image/png" href="https://nimi.gov.in/web/img/nimi-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -33,42 +34,104 @@
   </style>
 </head>
 <body class="antialiased selection:bg-brand-100 selection:text-brand-900">
-  <section id="loginScreen" class="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-brand-100 via-slate-50 to-slate-100" style="display:none;">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border border-slate-100 p-8">
-      <div class="flex items-center justify-center w-12 h-12 bg-brand-50 rounded-xl mb-6">
-        <svg class="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+<div id="govRibbon" style="background:#003d7c;color:#fff;font-size:11px;padding:4px 16px;display:flex;align-items:center;justify-content:space-between;font-family:'Inter',sans-serif;letter-spacing:0.3px;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/240px-Emblem_of_India.svg.png" alt="Emblem of India" style="height:22px;filter:brightness(10);">
+    <span>Government of India &nbsp;|&nbsp; Ministry of Skill Development &amp; Entrepreneurship &nbsp;|&nbsp; Directorate General of Training</span>
+  </div>
+  <a href="https://nimi.gov.in" target="_blank" rel="noopener" style="color:#f47920;font-weight:600;text-decoration:none;font-size:11px;">nimi.gov.in ↗</a>
+</div>
+  <section id="loginScreen" style="display:none;" class="w-full">
+    <div style="min-height:100vh;background:linear-gradient(135deg,#003d7c 0%,#00529b 60%,#0a6cbf 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Inter',sans-serif;padding:24px;width:100%;">
+
+      <!-- Watermark -->
+      <div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;opacity:0.04;transform:rotate(-30deg);font-size:48px;font-weight:900;color:#fff;text-align:center;letter-spacing:4px;white-space:nowrap;">
+        NIMI LUCKNOW<br>AUTHORISED SALES COUNTER
       </div>
-      <h1 class="text-2xl font-bold text-slate-900 mb-2">NIMI Workspace</h1>
-      <p class="text-sm text-slate-500 mb-8">Enter your administrative credentials to access the point of sale terminal.</p>
-      <div class="space-y-5">
-        <div>
-          <label for="loginPassword" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Security Key</label>
-          <input id="loginPassword" type="password" placeholder="Password" class="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-shadow bg-white">
-          <div id="loginError" class="text-xs text-red-500 font-medium mt-2"></div>
+
+      <!-- Card -->
+      <div style="position:relative;z-index:1;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,0.25);width:100%;max-width:420px;overflow:hidden;">
+
+        <!-- Card header strip -->
+        <div style="background:#003d7c;padding:28px 32px 20px;text-align:center;">
+          <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:14px;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/240px-Emblem_of_India.svg.png"
+              alt="Emblem of India" style="height:52px;filter:brightness(10);">
+            <div style="width:1px;height:52px;background:rgba(255,255,255,0.25);"></div>
+            <img src="https://nimi.gov.in/web/img/nimi-logo.png"
+              alt="NIMI Logo" style="height:48px;object-fit:contain;filter:brightness(10);"
+              onerror="this.style.display='none'">
+          </div>
+          <p style="color:rgba(255,255,255,0.65);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 4px;">
+            Ministry of Skill Development &amp; Entrepreneurship, Govt. of India
+          </p>
+          <h1 style="color:#fff;font-size:18px;font-weight:700;margin:0 0 2px;">National Instructional Media Institute</h1>
+          <p style="color:#f47920;font-size:13px;font-weight:600;margin:0;">Lucknow — Book Sales Counter</p>
         </div>
-        <button id="loginBtn" class="bg-brand-600 text-white font-semibold py-2.5 px-5 rounded-lg shadow-sm hover:bg-brand-700 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed w-full flex justify-center items-center gap-2">
-          Authenticate
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-        </button>
+
+        <!-- Login form body -->
+        <div style="padding:28px 32px 32px;">
+          <p style="color:#555;font-size:12px;text-align:center;margin:0 0 20px;letter-spacing:0.2px;">
+            Authorised personnel only. Enter your security key to access the POS terminal.
+          </p>
+
+          <!-- Keep the existing password input and button — just re-style them -->
+          <input id="loginPassword" type="password" placeholder="Password" style="width:100%;padding:11px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;font-family:inherit;">
+
+          <div id="loginError" class="text-xs text-red-500 font-medium mt-2"></div>
+
+          <button id="loginBtn" style="width:100%;padding:12px;background:#003d7c;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:12px;letter-spacing:0.3px;" class="flex justify-center items-center gap-2">
+            Authenticate
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+          </button>
+
+          <p style="color:#aaa;font-size:10px;text-align:center;margin:20px 0 0;letter-spacing:0.3px;">
+            🔒 Secure Internal Portal &nbsp;|&nbsp; For assistance contact your NIMI supervisor
+          </p>
+        </div>
       </div>
+
+      <!-- Bottom logos -->
+      <div style="position:relative;z-index:1;margin-top:28px;display:flex;align-items:center;gap:20px;opacity:0.75;">
+        <img src="https://www.skillindiadigital.gov.in/assets/images/skillindialogo.png"
+          alt="Skill India" style="height:32px;filter:brightness(10);"
+          onerror="this.style.display='none'">
+        <span style="color:rgba(255,255,255,0.4);font-size:18px;">|</span>
+        <span style="color:rgba(255,255,255,0.7);font-size:10px;letter-spacing:1px;">DGT — DIRECTORATE GENERAL OF TRAINING</span>
+      </div>
+
+      <p style="position:relative;z-index:1;color:rgba(255,255,255,0.35);font-size:10px;margin-top:16px;letter-spacing:0.5px;">
+        © 2025 National Instructional Media Institute. All rights reserved.
+      </p>
     </div>
   </section>
 
   <main id="appRoot" class="max-w-[1400px] mx-auto min-h-screen flex flex-col hidden">
+    <div style="position:fixed;inset:0;pointer-events:none;z-index:0;display:flex;align-items:center;justify-content:center;overflow:hidden;" aria-hidden="true">
+      <div style="transform:rotate(-25deg);opacity:0.018;font-size:64px;font-weight:900;color:#003d7c;white-space:nowrap;letter-spacing:6px;user-select:none;text-align:center;line-height:1.4;">
+        NIMI LUCKNOW<br>AUTHORISED SALES COUNTER<br>NIMI LUCKNOW
+      </div>
+    </div>
+
     <header class="glass-panel border-b border-slate-200 sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 bg-brand-600 rounded flex items-center justify-center">
-          <span class="text-white font-bold text-sm tracking-tighter">NI</span>
-        </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="https://nimi.gov.in/web/img/nimi-logo.png"
+          alt="NIMI" style="height:36px;object-fit:contain;"
+          onerror="this.onerror=null;this.style.display='none';">
         <div>
-          <h2 class="text-lg font-bold text-slate-900 leading-tight">NIMI Lucknow</h2>
-          <div class="flex items-center gap-2">
+          <div style="font-size:15px;font-weight:700;color:#003d7c;line-height:1.1;">NIMI Lucknow</div>
+          <div style="font-size:10px;color:#6b7280;letter-spacing:0.5px;line-height:1.2;">Book Sales Counter &nbsp;|&nbsp; Govt. of India</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
             <span id="status" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase bg-slate-100 text-slate-500">Initializing...</span>
             <span id="bookCount" class="text-[11px] font-medium text-slate-500">0 records</span>
           </div>
         </div>
       </div>
       <div class="flex items-center gap-3">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/240px-Emblem_of_India.svg.png"
+          alt="Emblem of India"
+          style="height:28px;opacity:0.15;margin-right:8px;"
+          onerror="this.style.display='none'">
         <button id="auditBtn" class="bg-white border border-slate-300 text-slate-700 font-semibold py-2.5 px-5 rounded-lg shadow-sm hover:bg-slate-50 focus:ring-2 focus:ring-slate-200 focus:ring-offset-2 transition-all text-sm py-2 px-4 flex items-center gap-2">
           <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6m3 6V7m3 10v-4m5 8H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v14a2 2 0 01-2 2z"></path></svg>
           Inspection
@@ -211,7 +274,13 @@
           </div>
         </div>
       </section>
-    </div>
+    <footer style="background:#003d7c;color:rgba(255,255,255,0.6);font-size:10px;text-align:center;padding:10px 16px;letter-spacing:0.5px;font-family:'Inter',sans-serif;margin-top:auto;">
+      <span>© 2025 National Instructional Media Institute (NIMI) — Lucknow Book Sales Counter</span>
+      &nbsp;|&nbsp;
+      <span>Under Ministry of Skill Development &amp; Entrepreneurship, Govt. of India</span>
+      &nbsp;|&nbsp;
+      <a href="https://nimi.gov.in" target="_blank" rel="noopener" style="color:#f47920;text-decoration:none;">nimi.gov.in</a>
+    </footer>
   </main>
 
   <div id="stockModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
@@ -1062,11 +1131,28 @@
 
     function pdf(tx,t){
       const {jsPDF}=window.jspdf,doc=new jsPDF();let y=14;
-      doc.setFillColor(30,58,138);doc.rect(0,0,210,32,"F");doc.setTextColor(255,255,255);doc.setFontSize(22);doc.setFont("helvetica","bold");doc.text("NIMI LUCKNOW",14,18);doc.setFontSize(10);doc.setFont("helvetica","normal");doc.text("Official Invoice",14,26);doc.text(`Receipt: ${tx.no}`,150,18,{align:"right"});doc.text(tx.date,150,26,{align:"right"});
-      y=45;doc.setTextColor(30,41,59);doc.setFontSize(12);doc.setFont("helvetica","bold");doc.text("Billed To:",14,y);doc.setFont("helvetica","normal");doc.setFontSize(11);y+=7;doc.text(s.c.name,14,y);y+=6;doc.text(`Phone: ${s.c.phone}`,14,y);y+=6;doc.text(`Email: ${s.c.email}`,14,y);y+=6;doc.text(`Address: ${s.c.address}, ${s.c.pincode}`,14,y);y+=14;
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 14;
+
+      // Official header on receipt PDF
+      doc.setFontSize(7);
+      doc.setTextColor(100, 100, 100);
+      doc.text("National Instructional Media Institute (NIMI) — Lucknow Book Sales Counter", pageW / 2, 12, { align: "center" });
+      doc.text("Under Ministry of Skill Development & Entrepreneurship, Govt. of India  |  nimi.gov.in", pageW / 2, 17, { align: "center" });
+      doc.setDrawColor(0, 61, 124);
+      doc.setLineWidth(0.4);
+      doc.line(margin, 20, pageW - margin, 20);
+
+      doc.setFillColor(30,58,138);doc.rect(0,24,210,32,"F");doc.setTextColor(255,255,255);doc.setFontSize(22);doc.setFont("helvetica","bold");doc.text("NIMI LUCKNOW",14,42);doc.setFontSize(10);doc.setFont("helvetica","normal");doc.text("Official Invoice",14,50);doc.text(`Receipt: ${tx.no}`,150,42,{align:"right"});doc.text(tx.date,150,50,{align:"right"});
+      y=69;doc.setTextColor(30,41,59);doc.setFontSize(12);doc.setFont("helvetica","bold");doc.text("Billed To:",14,y);doc.setFont("helvetica","normal");doc.setFontSize(11);y+=7;doc.text(s.c.name,14,y);y+=6;doc.text(`Phone: ${s.c.phone}`,14,y);y+=6;doc.text(`Email: ${s.c.email}`,14,y);y+=6;doc.text(`Address: ${s.c.address}, ${s.c.pincode}`,14,y);y+=14;
       doc.setFillColor(241,245,249);doc.rect(14,y-6,182,10,"F");doc.setFontSize(10);doc.setFont("helvetica","bold");doc.text("Item Description",16,y);doc.text("Rate",132,y);doc.text("Qty",154,y);doc.text("Amount",176,y,{align:"right"});y+=8;doc.setFont("helvetica","normal");
       tx.lines.forEach(i=>{if(y>270){doc.addPage();y=20;}doc.text(i.title.length>65?`${i.title.slice(0,62)}...`:i.title,16,y);doc.text(fmt(i.price),132,y);doc.text(String(i.qty),154,y);doc.text(fmt(i.amount),176,y,{align:"right"});y+=7;});
-      y+=5;doc.setDrawColor(203,213,225);doc.line(14,y,196,y);y+=10;doc.text(`Subtotal: ${fmt(t.sub)}`,130,y,{align:"right"});y+=7;doc.setTextColor(22,163,74);doc.text(`Discount (${Math.round(t.r*100)}%): - ${fmt(t.d)}`,130,y,{align:"right"});y+=8;doc.setTextColor(30,41,59);doc.setFontSize(14);doc.setFont("helvetica","bold");doc.text(`Net Total: ${fmt(t.t)}`,130,y,{align:"right"});y+=16;doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(148,163,184);doc.text("Tiers: <=3000=0%, 3001-5000=10%, 5001-10000=20%, 10001-35000=25%, >=35000=35%",14,y);doc.save(`${tx.no}.pdf`);
+      y+=5;doc.setDrawColor(203,213,225);doc.line(14,y,196,y);y+=10;doc.text(`Subtotal: ${fmt(t.sub)}`,130,y,{align:"right"});y+=7;doc.setTextColor(22,163,74);doc.text(`Discount (${Math.round(t.r*100)}%): - ${fmt(t.d)}`,130,y,{align:"right"});y+=8;doc.setTextColor(30,41,59);doc.setFontSize(14);doc.setFont("helvetica","bold");doc.text(`Net Total: ${fmt(t.t)}`,130,y,{align:"right"});y+=16;doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(148,163,184);doc.text("Tiers: <=3000=0%, 3001-5000=10%, 5001-10000=20%, 10001-35000=25%, >=35000=35%",14,y);
+      doc.setFontSize(6.5);
+      doc.setTextColor(150, 150, 150);
+      doc.text("This is a computer-generated receipt from NIMI Lucknow Authorised Sales Counter.", pageW / 2, doc.internal.pageSize.getHeight() - 8, { align: "center" });
+      doc.text("For queries: nimi.gov.in | CTI Campus, Guindy, Chennai - 600032", pageW / 2, doc.internal.pageSize.getHeight() - 4, { align: "center" });
+      doc.save(`${tx.no}.pdf`);
     }
 
     async function checkout(){
